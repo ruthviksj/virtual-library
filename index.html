@@ -176,14 +176,12 @@ h1[contenteditable="true"]{outline:1px dashed var(--muted);outline-offset:6px;bo
 .fade{position:absolute;top:0;bottom:0;width:72px;pointer-events:none;opacity:0;transition:opacity .3s;z-index:1}
 .fade.l{left:0;background:linear-gradient(90deg,var(--back) 10%,transparent)}
 .fade.r{right:0;background:linear-gradient(270deg,var(--back) 10%,transparent)}
-.nudge{position:absolute;top:50%;z-index:2;width:38px;height:38px;margin-top:-4px;border-radius:50%;border:0;cursor:pointer;display:grid;place-items:center;
-  color:var(--plaque-ink);background:linear-gradient(180deg,color-mix(in srgb,var(--plaque) 80%,white),var(--plaque) 50%,color-mix(in srgb,var(--plaque) 75%,black));
-  box-shadow:0 2px 6px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.35);opacity:0;pointer-events:none;transform:translateY(-50%) scale(.85);transition:opacity .25s,transform .25s}
-.nudge.l{left:10px}.nudge.r{right:10px}
-.nudge:hover{transform:translateY(-50%) scale(1.06)}
+.fade svg{position:absolute;top:50%;margin-top:-16px;color:var(--plaque);opacity:.8;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));animation:nudge 1.6s ease-in-out infinite}
+.fade.l svg{left:12px;animation-name:nudgeL}.fade.r svg{right:12px}
+@keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
+@keyframes nudgeL{0%,100%{transform:translateX(0)}50%{transform:translateX(-4px)}}
 .shelf.more-left .fade.l,.shelf.more-right .fade.r{opacity:1}
-.shelf.more-left .nudge.l,.shelf.more-right .nudge.r{opacity:1;pointer-events:auto;transform:translateY(-50%) scale(1)}
-.shelf.all .fade,.shelf.all .nudge{display:none}
+.shelf.all .fade{display:none}
 .showall{font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;border:0;border-radius:2px;padding:3px 9px;cursor:pointer;background:rgba(0,0,0,.35);color:#f4ead7;white-space:nowrap}
 .showall:hover{background:rgba(0,0,0,.55)}
 .row.all{
@@ -285,7 +283,9 @@ footer{margin-top:60px;text-align:center;font-size:14px;color:var(--muted);font-
 .card .hole{position:relative;display:block;margin:26px auto -28px;width:16px;height:16px;border-radius:50%;background:rgba(10,8,6,.6);box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
 .card-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;height:56px}
 .callno{font-family:var(--f-mono);font-size:13px;letter-spacing:.06em;line-height:1.35;white-space:pre}
-.close{border:0;background:transparent;font-size:26px;line-height:1;cursor:pointer;padding:4px 8px;color:var(--paper-ink)}
+.close{border:1px solid color-mix(in srgb,var(--paper-ink) 35%,transparent);background:var(--paper);width:40px;height:40px;border-radius:50%;font-size:24px;line-height:1;cursor:pointer;padding:0;color:var(--paper-ink);display:grid;place-items:center;flex:none;transition:background .15s}
+.close:hover{background:var(--paper-ink);color:var(--paper)}
+.card-head .close{position:sticky;top:0;z-index:5}
 .card-body{display:grid;grid-template-columns:170px minmax(0,1fr);gap:28px;margin-top:20px}
 .card-cover{position:relative;width:170px;height:250px;border-radius:1px 3px 3px 1px;box-shadow:6px 6px 14px rgba(0,0,0,.3)}
 .card h2{font-family:var(--f-display);font-weight:400;font-size:32px;line-height:1.08;margin:0 0 6px;text-wrap:balance}
@@ -413,7 +413,6 @@ body.dragging, body.dragging *{cursor:grabbing!important;user-select:none}
   .ledge{margin:0 -10px}
   .row{padding:26px 12px 0;min-height:250px}
   .row.all{padding-top:0}
-  .nudge{width:32px;height:32px}
   .fade{width:44px}
   .card{padding:22px 18px 40px}
   .card-body{grid-template-columns:1fr}
@@ -741,7 +740,7 @@ function render(){
   document.getElementById('owner').textContent = data.owner || 'My Library';
   document.title = data.owner || 'My Library';
   document.getElementById('tally').innerHTML =
-    `<b>${read.length}</b> volumes, <b>${pages.toLocaleString()}</b> pages, across ${words(data.shelves.filter(s => !isSpecial(s)).length)} shelves.${avg ? ` Average rating <b>${avg}</b>.` : ''}${now.length ? ` Currently reading <i>${esc(now[0].title)}</i>${now.length > 1 ? ` and ${words(now.length - 1)} more` : ''}.` : ''}`;
+    `<b>${read.length}</b> volumes, <b>${pages.toLocaleString()}</b> pages, across ${(n => `${words(n)} shel${n === 1 ? 'f' : 'ves'}`)(data.shelves.filter(s => !isSpecial(s)).length)}.${avg ? ` Average rating <b>${avg}</b>.` : ''}${now.length ? ` Currently reading <i>${esc(now[0].title)}</i>${now.length > 1 ? ` and ${words(now.length - 1)} more` : ''}.` : ''}`;
   document.body.classList.toggle('curating', curating);
   document.getElementById('sampleNotice').hidden = !data.sample;
 
@@ -773,9 +772,7 @@ function render(){
       </div>` : '';
     return `<section class="shelf${expanded.has(s.id) ? ' all' : ''}" id="shelf-${s.id}" aria-label="${esc(s.name)}">
       <div class="bay">
-        <div class="fade l"></div><div class="fade r"></div>
-        <button class="nudge l" data-scroll="-1" aria-label="Earlier books on ${esc(s.name)}" tabindex="-1"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2L4 7l5 5"/></svg></button>
-        <button class="nudge r" data-scroll="1" aria-label="More books on ${esc(s.name)}" tabindex="-1"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 2l5 5-5 5"/></svg></button>
+        <div class="fade l" aria-hidden="true"><svg width="18" height="32" viewBox="0 0 18 32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M13 4L4 16l9 12"/></svg></div><div class="fade r" aria-hidden="true"><svg width="18" height="32" viewBox="0 0 18 32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 4l9 12-9 12"/></svg></div>
         <div class="row${expanded.has(s.id) ? ' all' : ''}${s.sections?.length && (books.length || curating) ? ' sectioned' : ''}">${inner}</div>
       </div>
       <div class="ledge"><span class="plaque" data-plaque="${s.id}">${esc(s.name)} · ${books.length}</span><button class="showall" data-showall="${s.id}" hidden></button>${tools}</div>
@@ -828,6 +825,30 @@ function updateOverflow(shelf){
 }
 function updateAllOverflow(){ document.querySelectorAll('.shelf').forEach(updateOverflow); }
 
+/* hover near a shelf's left or right edge and it glides that way; no buttons sit over the books */
+const EDGE = 120;
+let glide = null;
+document.addEventListener('mousemove', e => {
+  if (drag?.started) return;
+  const row = e.target.closest?.('.row');
+  if (!row || row.classList.contains('all') || row.scrollWidth <= row.clientWidth + 4) { glide = null; return; }
+  const r = row.getBoundingClientRect(), fromL = e.clientX - r.left, fromR = r.right - e.clientX;
+  let v = 0;
+  if (fromL < EDGE && row.scrollLeft > 0) v = -Math.pow((EDGE - fromL) / EDGE, 1.6);
+  else if (fromR < EDGE && row.scrollLeft + row.clientWidth < row.scrollWidth) v = Math.pow((EDGE - fromR) / EDGE, 1.6);
+  if (!v) { glide = null; return; }
+  const was = glide; glide = {row, v};
+  if (!was) requestAnimationFrame(step);
+});
+document.addEventListener('mouseleave', () => glide = null);
+function step(){
+  if (!glide) return;
+  const r = glide.row, before = r.scrollLeft;
+  r.scrollLeft += glide.v * 16;
+  if (r.scrollLeft === before) { glide = null; return; }   // reached the end
+  requestAnimationFrame(step);
+}
+
 function applySearch(){
   const q = document.getElementById('q').value.trim().toLowerCase();
   document.querySelectorAll('.spine,.faceout').forEach(el => {
@@ -857,8 +878,7 @@ function closeModal(){
   setTimeout(() => { veil.hidden = true; card.innerHTML = ''; }, 220);
   lastFocus?.focus?.();
 }
-veil.addEventListener('click', e => { if (e.target === veil) closeModal(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !veil.hidden) closeModal(); });
+// the card closes only from its own close or cancel buttons, so a stray click never loses a half-filled form
 
 function stars(n){ let s=''; for (let i=1;i<=5;i++) s += i<=n ? '★' : '<span class="off">★</span>'; return `<span class="stars" aria-label="${n} of 5">${s}</span>`; }
 
