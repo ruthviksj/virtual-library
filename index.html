@@ -354,6 +354,31 @@ footer{margin-top:60px;text-align:center;font-size:14px;color:var(--muted);font-
   .nempty{padding:24px 14px}
   .drawer{height:52px}
 }
+/* Sections inside a shelf */
+.row.sectioned{align-items:stretch;padding-top:10px;min-height:292px}
+.sect{flex:none;display:flex;flex-direction:column;justify-content:space-between;gap:10px;min-width:64px}
+.sect-tag{align-self:flex-start;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;
+  background:#efe5cc;color:#2a2018;padding:3px 8px;border-radius:1px;box-shadow:0 1px 2px rgba(0,0,0,.45);position:relative;margin-left:4px}
+.sect-tag b{font-weight:500;opacity:.5;margin-left:7px}
+.sect-tag.loose{background:transparent;color:color-mix(in srgb,var(--paper) 70%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--paper) 35%,transparent)}
+.sect-books{display:flex;align-items:flex-end;gap:2px;min-height:60px}
+.sect-empty{align-self:center;margin:0 4px 50px;padding:22px 14px;border:1px dashed color-mix(in srgb,var(--paper) 40%,transparent);border-radius:4px;color:color-mix(in srgb,var(--paper) 60%,transparent);font-style:italic;font-size:13.5px;white-space:nowrap}
+.divider{flex:none;align-self:stretch;width:12px;margin:-10px 14px 0;background:linear-gradient(90deg,var(--wood-dark),var(--wood-light) 45%,var(--wood) 62%,var(--wood-dark));box-shadow:3px 0 7px rgba(0,0,0,.35),-3px 0 7px rgba(0,0,0,.35)}
+.row.all.sectioned{flex-direction:column;flex-wrap:nowrap;row-gap:0;background:none;border-top:0;padding-top:10px}
+.row.all.sectioned .divider{display:none}
+.row.all.sectioned .sect{position:relative;padding-bottom:var(--P);margin-bottom:12px}
+.row.all.sectioned .sect:not(:has(~ .sect)){padding-bottom:0;margin-bottom:0}
+.row.all.sectioned .sect:has(~ .sect)::after{content:"";position:absolute;left:-26px;right:-26px;bottom:0;height:var(--P);background:linear-gradient(var(--wood-light) 0,var(--wood) 6px,var(--wood-dark));box-shadow:0 8px 12px -6px rgba(0,0,0,.5)}
+.row.all.sectioned .sect-books{flex-wrap:wrap;row-gap:var(--P);background-image:repeating-linear-gradient(180deg,transparent 0,transparent var(--L),var(--wood-light) var(--L),var(--wood) calc(var(--L) + 6px),var(--wood-dark) calc(var(--L) + var(--P)))}
+.row.all .sect-books > .spine{margin-top:calc(var(--L) - var(--h))}
+.row.all .sect-books > .faceout{margin-top:calc(var(--L) - 188px)}
+.sec-row{display:grid;grid-template-columns:minmax(0,1fr) 62px 38px 84px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid color-mix(in srgb,var(--paper-ink) 15%,transparent)}
+.sec-row input{border:1px solid color-mix(in srgb,var(--paper-ink) 25%,transparent);background:#fffdf8;border-radius:3px;padding:7px 10px;color:var(--paper-ink);font-size:16px;min-width:0;color-scheme:light}
+.sec-row .n{font-family:var(--f-mono);font-size:11.5px;opacity:.6;white-space:nowrap}
+.sec-row .btn{padding:5px 11px;font-size:13px}
+.card .btn.close{border:1px solid color-mix(in srgb,var(--paper-ink) 30%,transparent);padding:8px 16px;font-size:14px;line-height:1.2}
+.sec-add{display:flex;gap:8px;margin-top:14px}
+.sec-add input{flex:1;min-width:0;border:1px solid color-mix(in srgb,var(--paper-ink) 25%,transparent);background:#fffdf8;border-radius:3px;padding:8px 10px;color:var(--paper-ink);font-size:16px;color-scheme:light}
 /* Curate: drag and drop */
 body.curating .spine, body.curating .faceout{cursor:grab;touch-action:none}
 body.dragging, body.dragging *{cursor:grabbing!important;user-select:none}
@@ -508,6 +533,12 @@ const SAMPLE = {
   ].map(([title,author,year,pages,shelf,rating,finished,fav]) => ({id:uid(),title,author,year,pages,shelf,rating,finished,fav:!!fav,notes:'',cover:'',reading:title==='Range'}))
 };
 
+(() => {
+  const sec = {fiction:[['lit','Literary'],['myth','Myth & Fantasy'],['sf','Science Fiction'],['cls','Classics']], next:[['bought','Bought'],['tobuy','Yet to Buy']]};
+  SAMPLE.shelves.forEach(s => { if (sec[s.id]) s.sections = sec[s.id].map(([id,name]) => ({id, name})); });
+  const where = {'The Remains of the Day':'lit','Norwegian Wood':'lit','The God of Small Things':'lit','The Midnight Library':'lit','Klara and the Sun':'sf','Project Hail Mary':'sf','Circe':'myth','The Little Prince':'cls','Dune':'bought','Ogilvy on Advertising':'tobuy','The Overstory':'tobuy'};
+  SAMPLE.books.forEach(b => { if (where[b.title]) b.section = where[b.title]; });
+})();
 let data = load();
 let curating = false;
 let expanded = new Set();
@@ -720,11 +751,23 @@ function render(){
   caseEl.innerHTML = '<div class="grain"></div>' + data.shelves.map((s, si) => {
     const books = data.books.filter(b => b.shelf === s.id);
     let inner = '';
-    if (!books.length) inner = `<p class="empty-shelf">${curating ? 'An empty shelf. Drag books here.' : 'An empty shelf, waiting.'}</p>`;
-    else inner = books.map((b, i, arr) => b.fav ? faceHTML(b, b.reading) : spineHTML(b, i, arr)).join('') + DECOR[si % DECOR.length]();
+    const draw = list => list.map((b, i, arr) => b.fav ? faceHTML(b, b.reading) : spineHTML(b, i, arr)).join('');
+    const sectioned = !!s.sections?.length;
+    if (sectioned && (books.length || curating)) {
+      const blocks = s.sections.map(x => ({x, list: books.filter(b => b.section === x.id)}));
+      const loose = books.filter(b => !s.sections.some(x => x.id === b.section));
+      if (loose.length || curating) blocks.push({x:{id:'', name:'Unsorted'}, list: loose, loose:true});
+      inner = blocks.filter(k => k.list.length || curating).map(k => `<div class="sect" data-sect="${k.x.id}">
+          <span class="sect-tag${k.loose ? ' loose' : ''}">${esc(k.x.name)}<b>${k.list.length}</b></span>
+          <div class="sect-books">${k.list.length ? draw(k.list) : '<span class="sect-empty">Drag books here</span>'}</div>
+        </div>`).join('<div class="divider" aria-hidden="true"></div>') + DECOR[si % DECOR.length]();
+    }
+    else if (!books.length) inner = `<p class="empty-shelf">${curating ? 'An empty shelf. Drag books here.' : 'An empty shelf, waiting.'}</p>`;
+    else inner = draw(books) + DECOR[si % DECOR.length]();
     const tools = curating ? `<div class="ledge-tools">
         <button data-act="add" data-shelf="${s.id}">+ Book</button>
         <button data-act="rename" data-shelf="${s.id}">Rename</button>
+        <button data-act="sections" data-shelf="${s.id}">Sections${s.sections?.length ? ' · ' + s.sections.length : ''}</button>
         ${si > 0 ? `<button data-act="up" data-shelf="${s.id}">Up</button>` : ''}
         <button data-act="delshelf" data-shelf="${s.id}" class="">Remove</button>
       </div>` : '';
@@ -733,7 +776,7 @@ function render(){
         <div class="fade l"></div><div class="fade r"></div>
         <button class="nudge l" data-scroll="-1" aria-label="Earlier books on ${esc(s.name)}" tabindex="-1"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2L4 7l5 5"/></svg></button>
         <button class="nudge r" data-scroll="1" aria-label="More books on ${esc(s.name)}" tabindex="-1"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 2l5 5-5 5"/></svg></button>
-        <div class="row${expanded.has(s.id) ? ' all' : ''}">${inner}</div>
+        <div class="row${expanded.has(s.id) ? ' all' : ''}${s.sections?.length && (books.length || curating) ? ' sectioned' : ''}">${inner}</div>
       </div>
       <div class="ledge"><span class="plaque" data-plaque="${s.id}">${esc(s.name)} · ${books.length}</span><button class="showall" data-showall="${s.id}" hidden></button>${tools}</div>
     </section>`;
@@ -834,6 +877,7 @@ function showBook(id){
           ${b.year ? `<dt>Published</dt><dd>${esc(b.year)}</dd>` : ''}
           ${b.pages ? `<dt>Pages</dt><dd>${esc(b.pages)}</dd>` : ''}
           <dt>Shelf</dt><dd>${esc(s?.name || '')}</dd>
+          ${s?.sections?.find(x => x.id === b.section) ? `<dt>Section</dt><dd>${esc(s.sections.find(x => x.id === b.section).name)}</dd>` : ''}
           ${b.reading ? `<dt>Status</dt><dd>Currently reading</dd>` : ''}
           ${b.finished && !b.reading ? `<dt>Finished</dt><dd>${esc(fmtMonth(b.finished))}</dd>` : ''}
           ${b.rating ? `<dt>Rating</dt><dd>${stars(b.rating)}</dd>` : ''}
@@ -851,7 +895,7 @@ function showBook(id){
     </div>`);
 }
 
-function showForm(b, shelfId){
+function showForm(b, shelfId, sectionId){
   const isNew = !b;
   b = b || {title:'',author:'',year:'',pages:'',shelf:shelfId || data.shelves[0]?.id,rating:0,finished:'',notes:'',cover:'',fav:false};
   openModal(`
@@ -869,6 +913,7 @@ function showForm(b, shelfId){
       <div class="field"><label for="f-year">Year published</label><input id="f-year" inputmode="numeric" value="${esc(b.year)}"></div>
       <div class="field"><label for="f-pages">Pages</label><input id="f-pages" inputmode="numeric" value="${esc(b.pages)}"></div>
       <div class="field"><label for="f-shelf">Shelf</label><select id="f-shelf">${data.shelves.map(s => `<option value="${s.id}" ${s.id===b.shelf?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+      <div class="field" id="secField"><label for="f-section">Section</label><select id="f-section"></select></div>
       <div class="field"><label for="f-rating">Rating</label><select id="f-rating">${[0,1,2,3,4,5].map(n => `<option value="${n}" ${n==b.rating?'selected':''}>${n ? '★'.repeat(n) : 'Unrated'}</option>`).join('')}</select></div>
       <div class="field"><label for="f-finished">Finished</label><input id="f-finished" type="month" value="${esc(b.finished)}"></div>
       <div class="field"></div>
@@ -889,6 +934,14 @@ function showForm(b, shelfId){
       <div class="card-actions" style="grid-column:1/-1"><button class="btn primary" type="submit">${isNew ? 'Shelve it' : 'Save changes'}</button><button class="btn close-btn" type="button">Cancel</button></div>
     </form>`);
   const f = document.getElementById('bookForm');
+  // section list follows the chosen shelf
+  const fillSections = keep => {
+    const sh = shelfOf(f.querySelector('#f-shelf').value), list = sh?.sections || [];
+    f.querySelector('#secField').hidden = !list.length;
+    f.querySelector('#f-section').innerHTML = '<option value="">Unsorted</option>' + list.map(x => `<option value="${x.id}" ${x.id === keep ? 'selected' : ''}>${esc(x.name)}</option>`).join('');
+  };
+  fillSections(b.section || sectionId);
+  f.querySelector('#f-shelf').addEventListener('change', () => fillSections(''));
   // spine colour: 'auto' follows the cover, otherwise a hex the reader picked
   let mode = b.color || 'auto', autoHex = null;
   const val = id => f.querySelector(id).value.trim();
@@ -929,6 +982,7 @@ function showForm(b, shelfId){
       cover:v('#f-cover'), notes:f.querySelector('#f-notes').value, fav:f.querySelector('#f-fav').checked
     });
     if (mode === 'auto') delete rec.color; else rec.color = mode;
+    const secV = f.querySelector('#f-section').value; if (secV && !f.querySelector('#secField').hidden) rec.section = secV; else delete rec.section;
     if (f.dataset.isbn) rec.isbn = f.dataset.isbn;
     if (isNew) data.books.push(rec);
     save(); closeModal(); render();
@@ -1023,6 +1077,14 @@ document.addEventListener('click', e => {
     if (t.dataset.armed) { data.books = data.books.filter(b => b.id !== bid); save(); closeModal(); render(); }
     else { t.dataset.armed = '1'; t.textContent = 'Click again to remove'; }
   }
+  if (act === 'sections') return showSections(sid);
+  if (act === 'secUp') { const sh = shelfOf(sid), i = sh.sections.findIndex(x => x.id === t.dataset.sec); [sh.sections[i-1], sh.sections[i]] = [sh.sections[i], sh.sections[i-1]]; save(); render(); return showSections(sid); }
+  if (act === 'secDel') {
+    if (!t.dataset.armed) { t.dataset.armed = '1'; t.classList.add('danger'); t.textContent = 'Sure?'; return; }
+    const sh = shelfOf(sid); sh.sections = sh.sections.filter(x => x.id !== t.dataset.sec);
+    data.books.forEach(b => { if (b.shelf === sid && b.section === t.dataset.sec) delete b.section; });
+    save(); render(); return showSections(sid);
+  }
   if (act === 'up') { const i = data.shelves.findIndex(s => s.id === sid); [data.shelves[i-1], data.shelves[i]] = [data.shelves[i], data.shelves[i-1]]; save(); render(); }
   if (act === 'rename') {
     const p = document.querySelector(`[data-plaque="${sid}"]`), s = shelfOf(sid);
@@ -1041,6 +1103,34 @@ document.addEventListener('click', e => {
 });
 
 document.getElementById('q').addEventListener('input', applySearch);
+
+/* ---------- sections editor ---------- */
+function showSections(sid){
+  const sh = shelfOf(sid); sh.sections = sh.sections || [];
+  const n = id => data.books.filter(b => b.shelf === sid && b.section === id).length;
+  openModal(`
+    <div class="card-head"><div class="callno">SECTIONS\n${esc((sh.code || sh.name).slice(0,3).toUpperCase())}</div><button class="close" aria-label="Close">×</button></div>
+    <h2 id="cardTitle" style="margin-top:22px">Sections on ${esc(sh.name)}</h2>
+    <p class="notes" style="font-size:16px;line-height:28px;margin-bottom:10px">Split this shelf into blocks, such as Fantasy and Romance on a Fiction shelf. While curating, drag books from block to block.</p>
+    <div id="secList">${sh.sections.length ? sh.sections.map((x, i) => `<div class="sec-row">
+        <input id="sec-${x.id}" value="${esc(x.name)}" data-sec-rename="${x.id}" data-shelf="${sid}" aria-label="Section name">
+        <span class="n">${n(x.id)} book${n(x.id) === 1 ? '' : 's'}</span>
+        ${i ? `<button class="btn" data-act="secUp" data-shelf="${sid}" data-sec="${x.id}" aria-label="Move up">↑</button>` : '<span></span>'}
+        <button class="btn" data-act="secDel" data-shelf="${sid}" data-sec="${x.id}">Remove</button>
+      </div>`).join('') : '<p class="notes none" style="font-size:16px">No sections yet.</p>'}</div>
+    <form class="sec-add" id="secAdd"><input id="secNew" placeholder="${sh.kind === 'want' ? 'e.g. Bought, Yet to buy' : 'e.g. Fantasy, Romance, Indie Romance'}" aria-label="New section name" autofocus><button class="btn primary" type="submit">Add section</button></form>
+    <div class="card-actions"><button class="btn close" type="button" style="font-size:14px">Done</button></div>`);
+  document.getElementById('secAdd').addEventListener('submit', e => {
+    e.preventDefault(); const v = document.getElementById('secNew').value.trim(); if (!v) return;
+    v.split(',').map(x => x.trim()).filter(Boolean).forEach(name => sh.sections.push({id:uid(), name}));
+    save(); render(); showSections(sid); document.getElementById('secNew').focus();
+  });
+}
+document.addEventListener('change', e => {
+  const t = e.target; if (!t.dataset?.secRename) return;
+  const sh = shelfOf(t.dataset.shelf), x = sh?.sections?.find(y => y.id === t.dataset.secRename);
+  if (x && t.value.trim()) { x.name = t.value.trim(); save(); render(); }
+});
 
 /* ---------- toast ---------- */
 let toastT;
@@ -1084,15 +1174,25 @@ function moveDrag(){
   if (!row) return;
   d.row = row;
   row.querySelector('.empty-shelf')?.remove();
-  const items = [...row.querySelectorAll('.spine, .faceout')].filter(n => n !== d.el);
+  // in a sectioned shelf, drop into the block under the pointer (or the nearest one)
+  let box = row;
+  if (row.classList.contains('sectioned')) {
+    const sects = [...row.querySelectorAll('.sect')];
+    let sect = hit.closest('.sect');
+    if (!sect) sect = sects.find(n => { const r = n.getBoundingClientRect(); return row.classList.contains('all') ? d.y <= r.bottom : d.x <= r.right; }) || sects[sects.length - 1];
+    if (!sect) return;
+    box = sect.querySelector('.sect-books'); box.querySelector('.sect-empty')?.remove();
+  }
+  d.box = box;
+  const items = [...box.querySelectorAll('.spine, .faceout')].filter(n => n !== d.el);
   const before = items.find(n => {
     const r = n.getBoundingClientRect();
     const sameLine = d.y <= r.bottom + 32 && d.y >= r.bottom - 290;
     return sameLine ? d.x < r.left + r.width / 2 : r.top > d.y;
   });
-  const anchor = before || row.querySelector('.decor');
-  if (anchor) { if (d.el.nextElementSibling !== anchor) row.insertBefore(d.el, anchor); }
-  else if (row.lastElementChild !== d.el) row.appendChild(d.el);
+  const anchor = before || (box === row ? row.querySelector('.decor') : null);
+  if (anchor) { if (d.el.nextElementSibling !== anchor) box.insertBefore(d.el, anchor); }
+  else if (box.lastElementChild !== d.el) box.appendChild(d.el);
 }
 function autoScroll(){
   const d = drag; if (!d || !d.started) return;
@@ -1112,6 +1212,8 @@ function endDrag(d, cancel){
   const ids = [...d.row.querySelectorAll('.spine, .faceout')].map(n => n.dataset.id);
   const fromS = shelfOf(b.shelf), toS = shelfOf(to);
   if (to !== b.shelf) b.shelf = to;
+  const sectEl = d.el.closest('.sect');
+  if (sectEl && sectEl.dataset.sect) b.section = sectEl.dataset.sect; else delete b.section;
   const byId = Object.fromEntries(data.books.map(x => [x.id, x])), set = new Set(ids);
   data.books = data.books.filter(x => !set.has(x.id)).concat(ids.map(id => byId[id]).filter(Boolean));
   save(); render();
