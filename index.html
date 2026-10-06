@@ -320,6 +320,40 @@ footer{margin-top:60px;text-align:center;font-size:14px;color:var(--muted);font-
 .results button{flex:none;width:84px;border:1px solid color-mix(in srgb,var(--paper-ink) 20%,transparent);background:transparent;padding:4px;cursor:pointer;text-align:left;font-size:11px;line-height:1.25;border-radius:3px;color:var(--paper-ink)}
 .results img{width:100%;height:110px;object-fit:cover;display:block;margin-bottom:4px;background:#ddd}
 
+/* Layout with the nightstand on the right */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:34px;align-items:start}
+.layout > .main, .layout > .stand{min-width:0}
+.stand{position:sticky;top:calc(env(safe-area-inset-top,0px) + 40px);padding-top:96px}
+.lamp{position:absolute;top:0;left:50%;width:90px;height:100px;transform:translateX(-50%);pointer-events:none}
+.lamp::before{content:"";position:absolute;left:50%;top:-30px;width:260px;height:220px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(255,200,120,.22),transparent);pointer-events:none}
+.lamp .shade{position:absolute;top:6px;left:12px;width:66px;height:42px;background:linear-gradient(180deg,#f3e7cc,#d9c49a);clip-path:polygon(22% 0,78% 0,100% 100%,0 100%);box-shadow:inset 0 -6px 10px rgba(0,0,0,.15)}
+.lamp .bulb{position:absolute;top:44px;left:36px;width:18px;height:8px;border-radius:50%;background:#fff3cf;box-shadow:0 0 18px 8px rgba(255,214,140,.55)}
+.lamp .stem{position:absolute;top:48px;left:43px;width:4px;height:40px;background:linear-gradient(90deg,#8a6a35,#d4b06a,#8a6a35)}
+.lamp .base{position:absolute;bottom:0;left:25px;width:40px;height:12px;border-radius:50% 50% 3px 3px;background:linear-gradient(#c9a45c,#6e5224)}
+.stand-body{position:relative;padding:14px 12px 0;border-radius:3px 3px 0 0;background:linear-gradient(90deg,var(--wood-dark),var(--wood) 10%,var(--wood) 90%,var(--wood-dark));box-shadow:0 26px 50px -20px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.25)}
+.stand-body::before{content:"";position:absolute;left:-7px;right:-7px;top:-12px;height:14px;border-radius:3px;background:linear-gradient(var(--wood-light),var(--wood) 60%,var(--wood-dark));box-shadow:0 4px 8px rgba(0,0,0,.3)}
+.stand-slots{max-height:calc(100vh - 330px);min-height:236px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--wood-dark) transparent;display:flex;flex-direction:column}
+.nslot{flex:none;display:flex;flex-direction:column;align-items:center;background:linear-gradient(180deg,rgba(0,0,0,.45),transparent 22px),var(--back);box-shadow:inset 0 0 30px rgba(0,0,0,.35)}
+.nslot .faceout{margin:26px 0 0}
+.nledge{align-self:stretch;height:18px;margin:0 -12px;background:linear-gradient(var(--wood-light) 0,var(--wood) 4px,var(--wood-dark));box-shadow:0 6px 10px -4px rgba(0,0,0,.5);position:relative;z-index:1}
+.nempty{padding:34px 14px;color:color-mix(in srgb,var(--paper) 60%,transparent);font-style:italic;font-size:14.5px;text-align:center;line-height:1.45}
+.stand.drop .stand-slots{outline:2px dashed var(--accent);outline-offset:-6px}
+.drawer{height:74px;margin:0 -12px;background:linear-gradient(var(--wood),var(--wood-dark));display:grid;place-items:center;position:relative}
+.drawer::before{content:"";position:absolute;inset:10px 12px;border:1px solid rgba(0,0,0,.25);box-shadow:inset 0 1px 0 rgba(255,255,255,.08);border-radius:2px}
+.drawer .plaque{max-width:90%;font-size:10px;padding:3px 10px}
+.drawer .knob{position:absolute;bottom:12px;left:50%;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#f0d590,#8f6c2f)}
+.stand-foot{height:16px;margin:0 2px;background:linear-gradient(var(--wood-dark),rgba(0,0,0,.5));clip-path:polygon(0 0,100% 0,96% 100%,88% 100%,88% 40%,12% 40%,12% 100%,4% 100%)}
+.spine .rib{position:absolute;top:0;right:22%;width:7px;height:34px;background:#9b2c25;clip-path:polygon(0 0,100% 0,100% 100%,50% 78%,0 100%);z-index:2;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.shelf-pick{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;gap:26px}
+  .stand{position:static;order:-1;padding-top:0}
+  .lamp{display:none}
+  .stand-slots{flex-direction:row;max-height:none;min-height:0;overflow-x:auto;overflow-y:hidden}
+  .nslot{width:160px}
+  .nempty{padding:24px 14px}
+  .drawer{height:52px}
+}
 /* Curate: drag and drop */
 body.curating .spine, body.curating .faceout{cursor:grab;touch-action:none}
 body.dragging, body.dragging *{cursor:grabbing!important;user-select:none}
@@ -405,8 +439,13 @@ body.dragging, body.dragging *{cursor:grabbing!important;user-select:none}
   </div>
   <p class="notice" id="sampleNotice" hidden>These are sample books to show the layout. <button id="startCurate">Start curating</button> to make the shelves yours.</p>
 
-  <main class="case" id="case" aria-label="Bookcase"></main>
-  <button class="add-shelf" id="addShelf" hidden>+ Add a new shelf</button>
+  <div class="layout">
+    <div class="main">
+      <main class="case" id="case" aria-label="Bookcase"></main>
+      <button class="add-shelf" id="addShelf" hidden>+ Add a new shelf</button>
+    </div>
+    <aside class="stand" id="stand" aria-label="Currently reading"></aside>
+  </div>
 
   <footer id="foot"></footer>
 </div>
@@ -428,7 +467,6 @@ const SAMPLE = {
   sample: true,
   owner: "Rushi's Library",
   shelves: [
-    {id:'now', name:'Currently Reading', code:'NOW', kind:'reading'},
     {id:'brand', name:'Brand & Marketing', code:'MKT'},
     {id:'cosmos', name:'The Cosmos', code:'AST'},
     {id:'fiction', name:'Fiction', code:'FIC'},
@@ -463,11 +501,11 @@ const SAMPLE = {
     ['The Psychology of Money','Morgan Housel',2020,256,'ideas',4,'2024-05',0],
     ['Atomic Habits','James Clear',2018,320,'ideas',4,'2023-07',0],
     ['Steal Like an Artist','Austin Kleon',2012,160,'ideas',4,'2023-03',1],
-    ['Range','David Epstein',2019,352,'now',0,'',1],
+    ['Range','David Epstein',2019,352,'ideas',0,'',0],
     ['Dune','Frank Herbert',1965,412,'next',0,'',0],
     ['Ogilvy on Advertising','David Ogilvy',1983,224,'next',0,'',0],
     ['The Overstory','Richard Powers',2018,502,'next',0,'',0]
-  ].map(([title,author,year,pages,shelf,rating,finished,fav]) => ({id:uid(),title,author,year,pages,shelf,rating,finished,fav:!!fav,notes:'',cover:''}))
+  ].map(([title,author,year,pages,shelf,rating,finished,fav]) => ({id:uid(),title,author,year,pages,shelf,rating,finished,fav:!!fav,notes:'',cover:'',reading:title==='Range'}))
 };
 
 let data = load();
@@ -486,24 +524,31 @@ function load(){
 }
 function normalise(d){
   d.shelves.forEach(s => { if (!s.kind && s.id === 'now') s.kind = 'reading'; if (!s.kind && s.id === 'next') s.kind = 'want'; });
+  // "currently reading" used to be a shelf; it is now a status, so send those books home
+  const old = d.shelves.filter(s => s.kind === 'reading').map(s => s.id);
+  if (old.length) {
+    const normal = d.shelves.filter(s => !s.kind);
+    let general = normal[0];
+    d.books.forEach(b => {
+      if (!old.includes(b.shelf)) return;
+      b.reading = true;
+      const home = normal.find(s => s.id === b.home);
+      if (!home && !general) { general = {id:uid(), name:'General', code:'GEN'}; d.shelves.push(general); normal.push(general); }
+      b.shelf = (home || general).id; delete b.home;
+    });
+    d.shelves = d.shelves.filter(s => !old.includes(s.id));
+  }
   return d;
 }
 const isSpecial = s => s && (s.kind === 'reading' || s.kind === 'want');
-function readingShelf(){
-  let s = data.shelves.find(x => x.kind === 'reading');
-  if (!s) { s = {id:uid(), name:'Currently Reading', code:'NOW', kind:'reading'}; data.shelves.unshift(s); }
+function generalShelf(){
+  let s = data.shelves.find(x => !isSpecial(x));
+  if (!s) { s = {id:uid(), name:'General', code:'GEN'}; data.shelves.unshift(s); }
   return s;
 }
 function wantShelf(){
   let s = data.shelves.find(x => x.kind === 'want');
   if (!s) { s = {id:uid(), name:'Want to Read', code:'TBR', kind:'want'}; data.shelves.push(s); }
-  return s;
-}
-function homeShelf(b){
-  const h = shelfOf(b.home);
-  if (h && !isSpecial(h)) return h;
-  let s = data.shelves.find(x => !isSpecial(x));
-  if (!s) { s = {id:uid(), name:'Read', code:'RED'}; data.shelves.splice(1, 0, s); }
   return s;
 }
 const thisMonth = () => new Date().toISOString().slice(0,7);
@@ -647,8 +692,8 @@ function spineHTML(b, i, arr){
   const fs = b.title.length > 26 ? 12 : b.title.length > 16 ? 13.5 : 15;
   const lean = i === arr.length - 1 && arr.length > 3 && h % 3 === 0 ? ' lean' : '';
   const last = (b.author||'').split('&')[0].trim().split(' ').pop();
-  return `<button class="spine ${style}${lean}" data-id="${b.id}" style="--c:${c};--t:${t};--h:${H}px;--w:${W}px;--fs:${fs}px" aria-label="${esc(b.title)} by ${esc(b.author)}">
-    <span class="t">${esc(b.title)}</span><span class="a">${esc(last)}</span></button>`;
+  return `<button class="spine ${style}${lean}" data-id="${b.id}" style="--c:${c};--t:${t};--h:${H}px;--w:${W}px;--fs:${fs}px" aria-label="${esc(b.title)} by ${esc(b.author)}${b.reading ? ', currently reading' : ''}">
+    ${b.reading ? '<i class="rib" aria-hidden="true"></i>' : ''}<span class="t">${esc(b.title)}</span><span class="a">${esc(last)}</span></button>`;
 }
 function faceHTML(b, reading){
   return `<button class="faceout${reading ? ' reading' : ''}" data-id="${b.id}" aria-label="${esc(b.title)} by ${esc(b.author)}${reading ? ', currently reading' : ''}">${coverHTML(b)}</button>`;
@@ -658,7 +703,7 @@ function render(){
   const root = document.documentElement;
   const caseEl = document.getElementById('case');
   const read = data.books.filter(b => !isSpecial(shelfOf(b.shelf)));
-  const now = data.books.filter(b => shelfOf(b.shelf)?.kind === 'reading');
+  const now = data.books.filter(b => b.reading);
   const pages = read.reduce((s,b) => s + (+b.pages||0), 0);
   const rated = read.filter(b => b.rating > 0);
   const avg = rated.length ? (rated.reduce((s,b)=>s+b.rating,0)/rated.length).toFixed(1) : '';
@@ -674,10 +719,9 @@ function render(){
 
   caseEl.innerHTML = '<div class="grain"></div>' + data.shelves.map((s, si) => {
     const books = data.books.filter(b => b.shelf === s.id);
-    const reading = s.kind === 'reading';
     let inner = '';
-    if (!books.length) inner = `<p class="empty-shelf">${reading ? 'Nothing on the go. Open any book and mark it as currently reading.' : curating ? 'An empty shelf. Drag books here.' : 'An empty shelf, waiting.'}</p>`;
-    else inner = books.map((b, i, arr) => (b.fav || reading) ? faceHTML(b, reading) : spineHTML(b, i, arr)).join('') + DECOR[si % DECOR.length]();
+    if (!books.length) inner = `<p class="empty-shelf">${curating ? 'An empty shelf. Drag books here.' : 'An empty shelf, waiting.'}</p>`;
+    else inner = books.map((b, i, arr) => b.fav ? faceHTML(b, b.reading) : spineHTML(b, i, arr)).join('') + DECOR[si % DECOR.length]();
     const tools = curating ? `<div class="ledge-tools">
         <button data-act="add" data-shelf="${s.id}">+ Book</button>
         <button data-act="rename" data-shelf="${s.id}">Rename</button>
@@ -701,7 +745,8 @@ function render(){
   ob.contentEditable = curating ? 'true' : 'false';
   document.getElementById('foot').textContent = `Catalogued by hand. ${data.books.filter(b=>b.shelf==='next').length ? '' : ''}Last arranged ${new Date().toLocaleDateString(undefined,{month:'long',year:'numeric'})}.`;
 
-  data.books.filter(b => b.fav || shelfOf(b.shelf)?.kind === 'reading').forEach(findCover);
+  renderStand(now);
+  data.books.filter(b => b.fav || b.reading).forEach(findCover);
   ensureColours();
   document.querySelectorAll('.shelf .row').forEach(row => {
     row.addEventListener('scroll', () => updateOverflow(row.closest('.shelf')), {passive:true});
@@ -709,6 +754,20 @@ function render(){
   });
   updateAllOverflow();
   applySearch();
+}
+
+/* ---------- the nightstand: everything currently being read ---------- */
+function renderStand(now){
+  const slots = now.length
+    ? now.map(b => `<div class="nslot">${faceHTML(b, true)}<div class="nledge"></div></div>`).join('')
+    : `<div class="nslot"><p class="nempty">Nothing on the go. Open any book and choose <i>Mark as currently reading</i>${curating ? ', or drag one here' : ''}.</p><div class="nledge"></div></div>`;
+  document.getElementById('stand').innerHTML = `
+    <div class="lamp" aria-hidden="true"><div class="shade"></div><div class="bulb"></div><div class="stem"></div><div class="base"></div></div>
+    <div class="stand-body">
+      <div class="stand-slots">${slots}</div>
+      <div class="drawer"><span class="plaque">On the nightstand · ${now.length}</span><span class="knob"></span></div>
+    </div>
+    <div class="stand-foot"></div>`;
 }
 
 /* ---------- overflow: fades, arrows, show all ---------- */
@@ -775,16 +834,17 @@ function showBook(id){
           ${b.year ? `<dt>Published</dt><dd>${esc(b.year)}</dd>` : ''}
           ${b.pages ? `<dt>Pages</dt><dd>${esc(b.pages)}</dd>` : ''}
           <dt>Shelf</dt><dd>${esc(s?.name || '')}</dd>
-          ${b.finished && s?.kind !== 'reading' ? `<dt>Finished</dt><dd>${esc(fmtMonth(b.finished))}</dd>` : ''}
+          ${b.reading ? `<dt>Status</dt><dd>Currently reading</dd>` : ''}
+          ${b.finished && !b.reading ? `<dt>Finished</dt><dd>${esc(fmtMonth(b.finished))}</dd>` : ''}
           ${b.rating ? `<dt>Rating</dt><dd>${stars(b.rating)}</dd>` : ''}
         </dl>
         <p class="notes ${b.notes ? '' : 'none'}">${b.notes ? esc(b.notes) : 'No notes on this one yet.'}</p>
         <div class="card-actions">
           <button class="btn" data-act="edit" data-id="${b.id}">Edit</button>
-          ${s?.kind === 'reading'
+          ${b.reading
             ? `<button class="btn primary" data-act="finished" data-id="${b.id}">Mark as finished</button>`
             : `<button class="btn primary" data-act="reading" data-id="${b.id}">${s?.kind === 'want' ? 'Start reading' : 'Mark as currently reading'}</button>`}
-          ${s?.kind === 'reading' ? '' : `<button class="btn" data-act="fav" data-id="${b.id}">${b.fav ? 'Turn spine out' : 'Display cover out'}</button>`}
+          <button class="btn" data-act="fav" data-id="${b.id}">${b.fav ? 'Turn spine out' : 'Display cover out'}</button>
           <button class="btn danger" data-act="delbook" data-id="${b.id}">Remove</button>
         </div>
       </div>
@@ -936,14 +996,27 @@ document.addEventListener('click', e => {
   if (act === 'add') showForm(null, sid);
   if (act === 'edit') showForm(data.books.find(b => b.id === bid));
   if (act === 'reading') {
-    const b = data.books.find(x => x.id === bid), from = shelfOf(b.shelf);
-    if (!isSpecial(from)) b.home = b.shelf;
-    b.shelf = readingShelf().id; save(); render(); showBook(bid); toast(`Now reading ${b.title}`);
+    const b = data.books.find(x => x.id === bid);
+    if (shelfOf(b.shelf)?.kind === 'want') {
+      // a book leaving the to-read pile needs a real shelf to live on
+      const normal = data.shelves.filter(x => !isSpecial(x));
+      t.closest('.card-actions').innerHTML = `<p class="notes" style="margin:0">Which shelf does it belong on?</p>
+        <div class="shelf-pick">${normal.map(x => `<button class="btn" data-act="startOn" data-shelf="${x.id}" data-id="${b.id}">${esc(x.name)}</button>`).join('')}
+        <button class="btn" data-act="startOn" data-shelf="__new" data-id="${b.id}">+ New shelf</button></div>`;
+      return;
+    }
+    b.reading = true; save(); render(); showBook(bid); toast(`On the nightstand: ${b.title}`);
+  }
+  if (act === 'startOn') {
+    const b = data.books.find(x => x.id === bid);
+    if (sid === '__new') { const ns = {id:uid(), name:'General', code:'GEN'}; const wi = data.shelves.findIndex(x => x.kind === 'want'); data.shelves.splice(wi < 0 ? data.shelves.length : wi, 0, ns); b.shelf = ns.id; }
+    else b.shelf = sid;
+    b.reading = true; save(); render(); showBook(bid); toast(`On the nightstand: ${b.title}`);
   }
   if (act === 'finished') {
-    const b = data.books.find(x => x.id === bid), to = homeShelf(b);
-    b.shelf = to.id; delete b.home; if (!b.finished) b.finished = thisMonth();
-    save(); render(); showBook(bid); toast(`Finished. Back on ${to.name}`);
+    const b = data.books.find(x => x.id === bid);
+    b.reading = false; if (!b.finished) b.finished = thisMonth();
+    save(); render(); showBook(bid); toast(`Finished ${b.title}`);
   }
   if (act === 'fav') { const b = data.books.find(x => x.id === bid); b.fav = !b.fav; save(); render(); showBook(bid); }
   if (act === 'delbook') {
@@ -1004,6 +1077,9 @@ function moveDrag(){
   const d = drag;
   d.ghost.style.transform = `translate(${d.x - d.offX}px, ${d.y - d.offY}px) rotate(-3deg) scale(1.04)`;
   const hit = document.elementFromPoint(d.x, d.y);
+  const stand = document.getElementById('stand');
+  d.toStand = !!hit?.closest('#stand'); stand.classList.toggle('drop', d.toStand);
+  if (d.toStand) return;
   const row = hit?.closest('.row') || hit?.closest('.shelf')?.querySelector('.row');
   if (!row) return;
   d.row = row;
@@ -1029,15 +1105,13 @@ function autoScroll(){
 }
 function endDrag(d, cancel){
   cancelAnimationFrame(d.raf); d.ghost?.remove(); d.el.classList.remove('placeholder'); document.body.classList.remove('dragging');
+  document.getElementById('stand').classList.remove('drop');
+  if (!cancel && d.toStand) { const bk = data.books.find(x => x.id === d.id); if (!bk.reading) { bk.reading = true; save(); toast(`On the nightstand: ${bk.title}`); } return render(); }
   if (cancel || !d.row) return render();
   const to = d.row.closest('.shelf').id.slice(6), b = data.books.find(x => x.id === d.id);
   const ids = [...d.row.querySelectorAll('.spine, .faceout')].map(n => n.dataset.id);
   const fromS = shelfOf(b.shelf), toS = shelfOf(to);
-  if (to !== b.shelf) {
-    if (toS.kind === 'reading' && !isSpecial(fromS)) b.home = b.shelf;
-    if (fromS?.kind === 'reading' && !isSpecial(toS)) { delete b.home; if (!b.finished) b.finished = thisMonth(); }
-    b.shelf = to;
-  }
+  if (to !== b.shelf) b.shelf = to;
   const byId = Object.fromEntries(data.books.map(x => [x.id, x])), set = new Set(ids);
   data.books = data.books.filter(x => !set.has(x.id)).concat(ids.map(id => byId[id]).filter(Boolean));
   save(); render();
@@ -1078,18 +1152,17 @@ function importGoodreads(text){
     const fav = custom.some(x => /^favou?rites?$/i.test(x));
     const genre = custom.find(x => !/^favou?rites?$/i.test(x));
     let shelf;
-    if (ex === 'currently-reading') shelf = readingShelf();
-    else if (ex === 'to-read') shelf = wantShelf();
-    else shelf = shelfNamed(genre ? titleCase(genre) : 'Read');
+    if (ex === 'to-read') shelf = wantShelf();
+    else shelf = shelfNamed(genre ? titleCase(genre) : (ex === 'currently-reading' ? 'General' : 'Read'));
     const dr = get(r, 'Date Read').replace(/\//g, '-').slice(0, 7);
     const isbn = (get(r, 'ISBN13') || get(r, 'ISBN')).replace(/[^0-9Xx]/g, '');
     data.books.push({ id:uid(), title, author, year: +(get(r, 'Original Publication Year') || get(r, 'Year Published')) || '', pages: +get(r, 'Number of Pages') || '',
       shelf: shelf.id, rating: +get(r, 'My Rating') || 0, finished: dr, notes: get(r, 'My Review').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ''),
-      fav, cover:'', isbn });
+      fav, cover:'', isbn, reading: ex === 'currently-reading' });
     have.add((title + '|' + author).toLowerCase()); added++;
   }
   // keep the special shelves at the ends
-  data.shelves.sort((a, b) => (a.kind === 'reading' ? -1 : a.kind === 'want' ? 1 : 0) - (b.kind === 'reading' ? -1 : b.kind === 'want' ? 1 : 0));
+  data.shelves.sort((a, b) => (a.kind === 'want' ? 1 : 0) - (b.kind === 'want' ? 1 : 0));
   save(); render();
   return {added, skipped, shelves: data.shelves.filter(s => data.books.some(b => b.shelf === s.id)).length};
 }
@@ -1103,7 +1176,7 @@ document.getElementById('goodreadsBtn').onclick = () => {
       <li>Click <b>Export Library</b>, wait for the link, and download the file.</li>
       <li>Choose that file below.</li>
     </ol>
-    <p class="notes" style="line-height:28px;font-size:16px">Read books go onto shelves named after your Goodreads shelves; anything on a <i>favorites</i> shelf faces out. Currently reading and want to read get their own shelves. Ratings, read dates and reviews come along too.${data.sample ? ' The sample books will be cleared first.' : ' Books you already have are skipped.'}</p>
+    <p class="notes" style="line-height:28px;font-size:16px">Read books go onto shelves named after your Goodreads shelves; anything on a <i>favorites</i> shelf faces out. Books you are currently reading go on their shelf and onto the nightstand; want to read gets its own shelf. Ratings, read dates and reviews come along too.${data.sample ? ' The sample books will be cleared first.' : ' Books you already have are skipped.'}</p>
     <div class="card-actions"><label class="btn primary" for="grFile" style="cursor:pointer">Choose Goodreads file</label><input type="file" id="grFile" accept=".csv,text/csv" hidden></div>
     <p class="err" id="grErr" hidden></p>`);
   document.getElementById('grFile').onchange = e => {
