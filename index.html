@@ -365,10 +365,12 @@ footer{margin-top:60px;text-align:center;font-size:14px;color:var(--muted);font-
 .sect-empty{align-self:center;margin:0 4px 50px;padding:22px 14px;border:1px dashed color-mix(in srgb,var(--paper) 40%,transparent);border-radius:4px;color:color-mix(in srgb,var(--paper) 60%,transparent);font-style:italic;font-size:13.5px;white-space:nowrap}
 .divider{flex:none;align-self:stretch;width:12px;margin:-10px 14px 0;background:linear-gradient(90deg,var(--wood-dark),var(--wood-light) 45%,var(--wood) 62%,var(--wood-dark));box-shadow:3px 0 7px rgba(0,0,0,.35),-3px 0 7px rgba(0,0,0,.35)}
 .row.all.sectioned{flex-direction:column;flex-wrap:nowrap;row-gap:0;background:none;border-top:0;padding-top:10px}
-.row.all.sectioned .divider{display:none}
-.row.all.sectioned .sect{position:relative;padding-bottom:var(--P);margin-bottom:12px}
-.row.all.sectioned .sect:not(:has(~ .sect)){padding-bottom:0;margin-bottom:0}
-.row.all.sectioned .sect:has(~ .sect)::after{content:"";position:absolute;left:-26px;right:-26px;bottom:0;height:var(--P);background:linear-gradient(var(--wood-light) 0,var(--wood) 6px,var(--wood-dark));box-shadow:0 8px 12px -6px rgba(0,0,0,.5)}
+.plank-row{display:flex;align-items:stretch;position:relative;padding-bottom:var(--P);margin-bottom:12px;min-width:0}
+.plank-row:not(:has(~ .plank-row)){padding-bottom:0;margin-bottom:0}
+.plank-row:has(~ .plank-row)::after{content:"";position:absolute;left:-26px;right:-26px;bottom:0;height:var(--P);background:linear-gradient(var(--wood-light) 0,var(--wood) 6px,var(--wood-dark));box-shadow:0 8px 12px -6px rgba(0,0,0,.5)}
+.plank-row .sect{flex:1 1 auto;min-width:0}
+.plank-row.even .sect{flex:1 1 0}
+.plank-row .divider{margin:-10px 14px 0}
 .row.all.sectioned .sect-books{flex-wrap:wrap;row-gap:var(--P);background-image:repeating-linear-gradient(180deg,transparent 0,transparent var(--L),var(--wood-light) var(--L),var(--wood) calc(var(--L) + 6px),var(--wood-dark) calc(var(--L) + var(--P)))}
 .row.all .sect-books > .spine{margin-top:calc(var(--L) - var(--h))}
 .row.all .sect-books > .faceout{margin-top:calc(var(--L) - 188px)}
@@ -713,6 +715,7 @@ const DECOR = [
   () => `<div class="decor bookend" aria-hidden="true"></div>`
 ];
 
+function bookWidth(b){ const p = Math.min(Math.max(b.pages || 250, 80), 650); return Math.round(24 + (p/650)*30); }
 function spineHTML(b, i, arr){
   const {c,t,h} = look(b);
   const p = Math.min(Math.max(b.pages || 250, 80), 650);
@@ -756,10 +759,29 @@ function render(){
       const blocks = s.sections.map(x => ({x, list: books.filter(b => b.section === x.id)}));
       const loose = books.filter(b => !s.sections.some(x => x.id === b.section));
       if (loose.length || curating) blocks.push({x:{id:'', name:'Unsorted'}, list: loose, loose:true});
-      inner = blocks.filter(k => k.list.length || curating).map(k => `<div class="sect" data-sect="${k.x.id}">
+      const shown = blocks.filter(k => k.list.length || curating);
+      const sectHTML = k => `<div class="sect" data-sect="${k.x.id}">
           <span class="sect-tag${k.loose ? ' loose' : ''}">${esc(k.x.name)}<b>${k.list.length}</b></span>
           <div class="sect-books">${k.list.length ? draw(k.list) : '<span class="sect-empty">Drag books here</span>'}</div>
-        </div>`).join('<div class="divider" aria-hidden="true"></div>') + DECOR[si % DECOR.length]();
+        </div>`;
+      const DIV = '<div class="divider" aria-hidden="true"></div>';
+      if (expanded.has(s.id)) {
+        // pack sections side by side: a fixed number per plank, or as many as fit ("auto")
+        const per = +s.perPlank || 0, planks = [];
+        if (per) for (let i = 0; i < shown.length; i += per) planks.push(shown.slice(i, i + per));
+        else {
+          const avail = (document.getElementById('case').clientWidth || 1000) - 100;
+          let cur = [], w = 0;
+          shown.forEach(k => {
+            const kw = Math.max(110, k.list.reduce((t, b) => t + (b.fav ? 148 : bookWidth(b) + 2), 0) + 40);
+            if (cur.length && w + kw > avail) { planks.push(cur); cur = []; w = 0; }
+            cur.push(k); w += kw + 40;
+          });
+          if (cur.length) planks.push(cur);
+        }
+        inner = planks.map(pl => `<div class="plank-row${per ? ' even' : ''}">${pl.map(sectHTML).join(DIV)}</div>`).join('') + DECOR[si % DECOR.length]();
+      }
+      else inner = shown.map(sectHTML).join(DIV) + DECOR[si % DECOR.length]();
     }
     else if (!books.length) inner = `<p class="empty-shelf">${curating ? 'An empty shelf. Drag books here.' : 'An empty shelf, waiting.'}</p>`;
     else inner = draw(books) + DECOR[si % DECOR.length]();
@@ -1061,9 +1083,10 @@ document.addEventListener('click', e => {
     if (expanded.has(id)) expanded.delete(id); else expanded.add(id);
     saveExpanded();
     const open = expanded.has(id);
-    row.classList.toggle('all', open); shelf.classList.toggle('all', open);
-    if (open) row.scrollLeft = 0; else shelf.scrollIntoView({block:'nearest', behavior:'smooth'});
-    return updateOverflow(shelf);
+    render();
+    const again = document.getElementById('shelf-' + id);
+    if (!open) again?.scrollIntoView({block:'nearest', behavior:'smooth'});
+    return;
   }
   const act = t.dataset.act; if (!act) return;
   const sid = t.dataset.shelf, bid = t.dataset.id;
@@ -1138,8 +1161,15 @@ function showSections(sid){
         ${i ? `<button class="btn" data-act="secUp" data-shelf="${sid}" data-sec="${x.id}" aria-label="Move up">↑</button>` : '<span></span>'}
         <button class="btn" data-act="secDel" data-shelf="${sid}" data-sec="${x.id}">Remove</button>
       </div>`).join('') : '<p class="notes none" style="font-size:16px">No sections yet.</p>'}</div>
+    <div class="sec-row" style="grid-template-columns:minmax(0,1fr) auto;border-bottom:0;margin-top:10px">
+      <label for="secPer" style="font-size:16px">Sections per plank when the shelf is opened with <i>Show all</i></label>
+      <select id="secPer" style="border:1px solid color-mix(in srgb,var(--paper-ink) 25%,transparent);background:#fffdf8;border-radius:3px;padding:7px 10px;color:var(--paper-ink);font-size:15px;color-scheme:light">
+        ${[['0','Auto (fit as many as possible)'],['1','1'],['2','2'],['3','3'],['4','4']].map(([v,l]) => `<option value="${v}" ${String(+sh.perPlank || 0) === v ? 'selected' : ''}>${l}</option>`).join('')}
+      </select>
+    </div>
     <form class="sec-add" id="secAdd"><input id="secNew" placeholder="${sh.kind === 'want' ? 'e.g. Bought, Yet to buy' : 'e.g. Fantasy, Romance, Indie Romance'}" aria-label="New section name" autofocus><button class="btn primary" type="submit">Add section</button></form>
     <div class="card-actions"><button class="btn close" type="button" style="font-size:14px">Done</button></div>`);
+  document.getElementById('secPer').addEventListener('change', e => { sh.perPlank = +e.target.value || 0; save(); render(); });
   document.getElementById('secAdd').addEventListener('submit', e => {
     e.preventDefault(); const v = document.getElementById('secNew').value.trim(); if (!v) return;
     v.split(',').map(x => x.trim()).filter(Boolean).forEach(name => sh.sections.push({id:uid(), name}));
