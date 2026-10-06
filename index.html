@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rushi's Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one tall wooden bookcase set into a painted wall; each shelf is a scrollable row of cloth spines on a plank with a brass plaque. Three "rooms" re-paint wall, wood and brass. */
+:root{
+  /* Atelier (light): birch case on a pale linen-grey wall */
+  --wall:#dde2e0; --wall-2:#c9d0ce; --back:#b9c1bf;
+  --wood:#c7a274; --wood-dark:#93714a; --wood-light:#e2c79e;
+  --plaque:#b89257; --plaque-ink:#24180a;
+  --ink:#1d2628; --muted:#56656a; --accent:#7a5426;
+  --paper:#fbfaf5; --paper-ink:#1f2324; --paper-rule:#c9dbe6; --card-red:#c0463d;
+  --chip:rgba(29,38,40,.07); --chip-hover:rgba(29,38,40,.13);
+  --f-display:"Young Serif", "Iowan Old Style", Georgia, serif;
+  --f-body:"Newsreader", "Iowan Old Style", Georgia, serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-room]):not([data-theme="light"]){
+    --wall:#1f3a30; --wall-2:#14271f; --back:#10201a;
+    --wood:#5c3b22; --wood-dark:#38220f; --wood-light:#80573a;
+    --plaque:#c9a45c; --plaque-ink:#2a1d0c;
+    --ink:#efe7d4; --muted:#a8b6a5; --accent:#d8b46a;
+    --paper:#f3ead6; --paper-ink:#2a2018; --paper-rule:#c8d3cf; --card-red:#b2453b;
+    --chip:rgba(239,231,212,.08); --chip-hover:rgba(239,231,212,.16);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]:not([data-room]),
+:root[data-room="reading"]{
+  --wall:#1f3a30; --wall-2:#14271f; --back:#10201a;
+  --wood:#5c3b22; --wood-dark:#38220f; --wood-light:#80573a;
+  --plaque:#c9a45c; --plaque-ink:#2a1d0c;
+  --ink:#efe7d4; --muted:#a8b6a5; --accent:#d8b46a;
+  --paper:#f3ead6; --paper-ink:#2a2018; --paper-rule:#c8d3cf; --card-red:#b2453b;
+  --chip:rgba(239,231,212,.08); --chip-hover:rgba(239,231,212,.16);
+  color-scheme:dark;
+}
+:root[data-room="study"]{
+  --wall:#4a1d21; --wall-2:#2c0f12; --back:#1f0a0c;
+  --wood:#43261a; --wood-dark:#24130b; --wood-light:#64402b;
+  --plaque:#d4b06a; --plaque-ink:#2a1a08;
+  --ink:#f3e5d5; --muted:#c9a9a0; --accent:#e2c07a;
+  --paper:#f5ecdc; --paper-ink:#2b1d16; --paper-rule:#d6d0c4; --card-red:#a63a32;
+  --chip:rgba(243,229,213,.08); --chip-hover:rgba(243,229,213,.16);
+  color-scheme:dark;
+}
+:root[data-room="atelier"]{
+  --wall:#dde2e0; --wall-2:#c9d0ce; --back:#b9c1bf;
+  --wood:#c7a274; --wood-dark:#93714a; --wood-light:#e2c79e;
+  --plaque:#b89257; --plaque-ink:#24180a;
+  --ink:#1d2628; --muted:#56656a; --accent:#7a5426;
+  --paper:#fbfaf5; --paper-ink:#1f2324; --paper-rule:#c9dbe6; --card-red:#c0463d;
+  --chip:rgba(29,38,40,.07); --chip-hover:rgba(29,38,40,.13);
+  color-scheme:light;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{
+  margin:0; color:var(--ink); font-family:var(--f-body); font-size:17px; line-height:1.5;
+  background:var(--wall);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 0%, color-mix(in srgb, var(--wall) 70%, white 8%), transparent 70%),
+    repeating-linear-gradient(90deg, transparent 0 88px, color-mix(in srgb, var(--wall-2) 35%, transparent) 88px 90px),
+    linear-gradient(var(--wall), var(--wall-2));
+  background-attachment:fixed;
+  transition:background-color .4s;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+
+.page{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:40px 64px}
+
+/* ---------- Header ---------- */
+.masthead{display:grid;grid-template-columns:1fr auto;gap:20px 32px;align-items:end;margin-bottom:28px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(40px,7vw,76px);line-height:.98;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h1[contenteditable="true"]{outline:1px dashed var(--muted);outline-offset:6px;border-radius:2px}
+.tally{margin:14px 0 0;color:var(--muted);font-size:18px;font-style:italic}
+.tally b{font-style:normal;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums}
+.controls{display:flex;flex-direction:column;gap:12px;align-items:flex-end}
+.rooms{display:flex;gap:6px;align-items:center}
+.rooms span{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.swatch{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.swatch[aria-pressed="true"]{border-color:var(--accent)}
+.swatch.reading{background:linear-gradient(135deg,#1f3a30 50%,#5c3b22 50%)}
+.swatch.study{background:linear-gradient(135deg,#4a1d21 50%,#43261a 50%)}
+.swatch.atelier{background:linear-gradient(135deg,#dde2e0 50%,#c7a274 50%)}
+.btn{border:1px solid color-mix(in srgb,var(--ink) 25%,transparent);background:var(--chip);padding:8px 16px;border-radius:999px;cursor:pointer;font-size:15px;transition:background .2s}
+.btn:hover{background:var(--chip-hover)}
+.btn.on{background:var(--accent);color:var(--wall-2);border-color:var(--accent)}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:22px}
+.search{flex:1 1 240px;min-width:0;display:flex;align-items:center;gap:8px;border-bottom:1px solid color-mix(in srgb,var(--ink) 30%,transparent);padding:6px 2px}
+.search input{border:0;background:transparent;outline:0;width:100%;font-size:17px;font-style:italic}
+.search input::placeholder{color:var(--muted)}
+.search svg{flex:none;opacity:.6}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:0;background:var(--chip);padding:6px 12px;border-radius:999px;cursor:pointer;font-size:14px;color:var(--ink)}
+.chip:hover{background:var(--chip-hover)}
+.curate-bar{display:flex;flex-wrap:wrap;gap:8px;margin:-6px 0 22px;padding:12px 14px;border:1px dashed color-mix(in srgb,var(--ink) 35%,transparent);border-radius:10px;align-items:center}
+.curate-bar p{margin:0 auto 0 0;font-size:15px;color:var(--muted);font-style:italic;min-width:0}
+.notice{margin:0 0 20px;font-size:15px;color:var(--muted);font-style:italic}
+.notice button{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font-style:italic}
+
+/* ---------- Bookcase ---------- */
+.case{
+  position:relative;
+  background:linear-gradient(90deg,var(--wood-dark),var(--wood) 6%,var(--wood) 94%,var(--wood-dark));
+  padding:22px 22px 0;
+  border-radius:4px 4px 0 0;
+  box-shadow:0 30px 60px -20px rgba(0,0,0,.55), 0 0 0 1px rgba(0,0,0,.25);
+}
+.case::before{ /* crown moulding */
+  content:"";position:absolute;left:-10px;right:-10px;top:-16px;height:18px;border-radius:3px;
+  background:linear-gradient(var(--wood-light),var(--wood) 60%,var(--wood-dark));
+  box-shadow:0 4px 8px rgba(0,0,0,.3);
+}
+.case::after{ /* plinth */
+  content:"";position:absolute;left:-6px;right:-6px;bottom:-22px;height:24px;
+  background:linear-gradient(var(--wood),var(--wood-dark));
+  box-shadow:0 12px 20px -6px rgba(0,0,0,.5);
+}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:multiply;
+  background:repeating-linear-gradient(90deg,transparent 0 3px,rgba(0,0,0,.25) 3px 4px,transparent 4px 11px,rgba(0,0,0,.12) 11px 12px)}
+.shelf{position:relative;scroll-margin-top:24px}
+.bay{
+  position:relative;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.45),transparent 26px),
+    linear-gradient(90deg,rgba(0,0,0,.35),transparent 22px,transparent calc(100% - 22px),rgba(0,0,0,.35)),
+    var(--back);
+  box-shadow:inset 0 0 40px rgba(0,0,0,.35);
+}
+.row{
+  display:flex;align-items:flex-end;gap:2px;
+  min-height:272px;padding:30px 26px 0;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:var(--wood-dark) transparent;
+}
+.row::-webkit-scrollbar{height:6px}
+.row::-webkit-scrollbar-thumb{background:var(--wood-dark);border-radius:3px}
+.ledge{
+  position:relative;height:30px;margin:0 -22px;
+  background:linear-gradient(var(--wood-light) 0,var(--wood) 5px,var(--wood) 60%,var(--wood-dark));
+  box-shadow:0 10px 14px -6px rgba(0,0,0,.55);
+  display:flex;align-items:center;justify-content:center;gap:8px;z-index:2;
+}
+.case > .shelf:last-of-type .ledge{margin-bottom:0}
+.shelf + .shelf .bay{margin-top:0}
+.plaque{
+  font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--plaque-ink);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--plaque) 80%,white),var(--plaque) 45%,color-mix(in srgb,var(--plaque) 75%,black));
+  padding:3px 14px;border-radius:2px;
+  box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 1px 2px rgba(0,0,0,.5);
+  position:relative;white-space:nowrap;max-width:70%;overflow:hidden;text-overflow:ellipsis;
+}
+.plaque::before,.plaque::after{content:"";position:absolute;top:50%;width:3px;height:3px;border-radius:50%;background:var(--plaque-ink);opacity:.5;transform:translateY(-50%)}
+.plaque::before{left:5px}.plaque::after{right:5px}
+.plaque input{font:inherit;letter-spacing:inherit;text-transform:inherit;background:transparent;border:0;outline:0;color:inherit;width:16ch;text-align:center}
+.ledge-tools{display:flex;gap:6px}
+.ledge-tools button{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;border:0;border-radius:2px;padding:3px 8px;cursor:pointer;background:rgba(0,0,0,.35);color:#f4ead7}
+.ledge-tools button:hover{background:rgba(0,0,0,.55)}
+.ledge-tools button.danger{background:#7e2a22}
+
+/* Overflow: fades, arrows, show-all */
+.fade{position:absolute;top:0;bottom:0;width:72px;pointer-events:none;opacity:0;transition:opacity .3s;z-index:1}
+.fade.l{left:0;background:linear-gradient(90deg,var(--back) 10%,transparent)}
+.fade.r{right:0;background:linear-gradient(270deg,var(--back) 10%,transparent)}
+.nudge{position:absolute;top:50%;z-index:2;width:38px;height:38px;margin-top:-4px;border-radius:50%;border:0;cursor:pointer;display:grid;place-items:center;
+  color:var(--plaque-ink);background:linear-gradient(180deg,color-mix(in srgb,var(--plaque) 80%,white),var(--plaque) 50%,color-mix(in srgb,var(--plaque) 75%,black));
+  box-shadow:0 2px 6px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.35);opacity:0;pointer-events:none;transform:translateY(-50%) scale(.85);transition:opacity .25s,transform .25s}
+.nudge.l{left:10px}.nudge.r{right:10px}
+.nudge:hover{transform:translateY(-50%) scale(1.06)}
+.shelf.more-left .fade.l,.shelf.more-right .fade.r{opacity:1}
+.shelf.more-left .nudge.l,.shelf.more-right .nudge.r{opacity:1;pointer-events:auto;transform:translateY(-50%) scale(1)}
+.shelf.all .fade,.shelf.all .nudge{display:none}
+.showall{font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;border:0;border-radius:2px;padding:3px 9px;cursor:pointer;background:rgba(0,0,0,.35);color:#f4ead7;white-space:nowrap}
+.showall:hover{background:rgba(0,0,0,.55)}
+.row.all{
+  --L:252px; --P:30px;
+  flex-wrap:wrap;overflow:visible;row-gap:var(--P);
+  padding-top:0;border-top:30px solid transparent;
+  background-clip:padding-box;
+  background-image:repeating-linear-gradient(180deg,transparent 0,transparent var(--L),var(--wood-light) var(--L),var(--wood) calc(var(--L) + 6px),var(--wood-dark) calc(var(--L) + var(--P)));
+}
+.row.all > .spine{margin-top:calc(var(--L) - var(--h))}
+.row.all > .faceout{margin-top:calc(var(--L) - 188px)}
+.row.all > .decor{display:none}
+.empty-shelf{align-self:center;margin:auto;color:color-mix(in srgb,var(--paper) 55%,transparent);font-style:italic;font-size:15px;padding-bottom:40px;text-align:center}
+
+/* Spines */
+.spine{
+  --c:#7b2d26; --t:#f4ead7;
+  flex:none;position:relative;border:0;padding:0;cursor:pointer;
+  width:var(--w);height:var(--h);
+  background:
+    linear-gradient(90deg,rgba(0,0,0,.35),rgba(255,255,255,.10) 18%,rgba(255,255,255,.04) 40%,rgba(0,0,0,.10) 75%,rgba(0,0,0,.4)),
+    var(--c);
+  color:var(--t);
+  border-radius:2px 2px 1px 1px;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.12), 2px 0 3px rgba(0,0,0,.35);
+  transform-origin:bottom center;
+  transition:transform .28s cubic-bezier(.2,.8,.2,1), opacity .25s, filter .25s;
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+  padding-block:14px 10px;overflow:hidden;
+}
+.spine:hover,.spine:focus-visible{transform:translateY(-12px)}
+.spine.lean{transform:rotate(-7deg) translateX(6px);margin-left:14px}
+.spine.lean:hover{transform:rotate(-7deg) translate(6px,-12px)}
+.spine .t{
+  writing-mode:vertical-rl;font-family:var(--f-display);font-size:var(--fs,14px);line-height:1.05;
+  max-height:calc(var(--h) - 64px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.spine .a{writing-mode:vertical-rl;font-family:var(--f-mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.8;white-space:nowrap;max-height:58px;overflow:hidden}
+.spine.s-bands::before,.spine.s-bands::after{content:"";position:absolute;left:0;right:0;height:5px;border-block:1px solid color-mix(in srgb,var(--accent) 80%,transparent);opacity:.85}
+.spine.s-bands::before{top:7px}.spine.s-bands::after{bottom:30px}
+.spine.s-label .t{background:color-mix(in srgb,#f3ead6 88%,var(--c));color:#2a2018;padding:8px 3px;border-radius:1px;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
+.spine.s-cap::before{content:"";position:absolute;top:0;left:0;right:0;height:26px;background:rgba(0,0,0,.28);border-bottom:1px solid rgba(255,255,255,.15)}
+.spine.dim{opacity:.16;filter:grayscale(1)}
+.spine.hit{transform:translateY(-12px)}
+
+/* Face-out covers */
+.faceout{flex:none;border:0;padding:0;margin:0 10px;cursor:pointer;position:relative;width:128px;height:188px;align-self:flex-end;transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .25s;box-shadow:6px 4px 10px rgba(0,0,0,.45);border-radius:1px 3px 3px 1px;background:none}
+.faceout:hover,.faceout:focus-visible{transform:translateY(-10px) rotate(-1deg)}
+.faceout.dim{opacity:.16;filter:grayscale(1)}
+.faceout.hit{transform:translateY(-10px)}
+
+.cover{position:absolute;inset:0;overflow:hidden;border-radius:inherit;background:var(--c);color:var(--t);display:flex;flex-direction:column;justify-content:space-between;padding:14px 12px;text-align:left}
+.cover::before{content:"";position:absolute;inset:7px;border:1px solid color-mix(in srgb,var(--t) 45%,transparent);pointer-events:none}
+.cover::after{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:linear-gradient(90deg,rgba(0,0,0,.35),rgba(255,255,255,.12));}
+.cover .ct{font-family:var(--f-display);font-size:16px;line-height:1.08;text-wrap:balance;position:relative;margin-top:6px}
+.cover .cr{width:28px;height:1px;background:currentColor;opacity:.6;margin:8px 0}
+.cover .ca{font-family:var(--f-mono);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.85;position:relative}
+.cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2;max-width:none}
+
+/* Decor */
+.decor{flex:none;align-self:flex-end;margin:0 14px;position:relative;pointer-events:none}
+.bookend{width:16px;height:120px;background:linear-gradient(90deg,#2b2b2b,#555 40%,#222);border-radius:2px 2px 0 0;box-shadow:2px 0 4px rgba(0,0,0,.4)}
+.bookend::after{content:"";position:absolute;bottom:0;left:0;width:52px;height:5px;background:#333;border-radius:1px}
+.plant{width:62px;height:150px}
+.plant .pot{position:absolute;bottom:0;left:9px;width:44px;height:46px;background:linear-gradient(90deg,#9d5a3a,#c07a54 45%,#8a4a2e);clip-path:polygon(0 0,100% 0,88% 100%,12% 100%)}
+.plant .pot::before{content:"";position:absolute;top:0;left:0;right:0;height:8px;background:rgba(0,0,0,.18)}
+.plant .leaf{position:absolute;bottom:40px;left:28px;width:12px;height:64px;background:linear-gradient(#5d8a52,#2f5a2c);border-radius:50% 50% 50% 50%/80% 80% 20% 20%;transform-origin:bottom center}
+.globe{width:76px;height:128px}
+.globe .ball{position:absolute;top:0;left:6px;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#d9c79a,#7d8f6a 45%,#3d5a5a 80%);box-shadow:inset -6px -8px 12px rgba(0,0,0,.4)}
+.globe .ring{position:absolute;top:-6px;left:0;width:76px;height:76px;border-radius:50%;border:3px solid #b08a45;border-left-color:transparent;border-bottom-color:transparent;transform:rotate(-20deg)}
+.globe .stem{position:absolute;top:70px;left:35px;width:6px;height:40px;background:#8a6a35}
+.globe .base{position:absolute;bottom:0;left:14px;width:48px;height:16px;border-radius:50% 50% 4px 4px;background:linear-gradient(#a07b3c,#5c431d)}
+.stack{display:flex;flex-direction:column;align-items:flex-start;gap:0}
+.stack i{display:block;height:22px;border-radius:2px;box-shadow:inset 0 2px 0 rgba(255,255,255,.12),0 1px 2px rgba(0,0,0,.35)}
+.candle{width:40px;height:104px}
+.candle .wax{position:absolute;bottom:14px;left:13px;width:14px;height:70px;background:linear-gradient(90deg,#e9e0cc,#fbf6ea 50%,#d6ccb6)}
+.candle .flame{position:absolute;bottom:86px;left:15px;width:10px;height:16px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:radial-gradient(circle at 50% 70%,#fff6c9,#f6b443 60%,transparent 70%);animation:flick 2.6s ease-in-out infinite;transform-origin:bottom center}
+.candle .dish{position:absolute;bottom:0;left:0;width:40px;height:14px;border-radius:0 0 50% 50%;background:linear-gradient(#b08a45,#6e5224)}
+@keyframes flick{0%,100%{transform:scale(1) rotate(-2deg)}50%{transform:scale(1.08,.94) rotate(2deg)}}
+
+.add-shelf{display:block;width:100%;margin-top:42px;padding:16px;border:1px dashed color-mix(in srgb,var(--ink) 40%,transparent);background:transparent;border-radius:6px;cursor:pointer;font-style:italic;font-size:17px;color:var(--muted)}
+.add-shelf:hover{background:var(--chip)}
+footer{margin-top:60px;text-align:center;font-size:14px;color:var(--muted);font-style:italic}
+
+/* ---------- Catalogue card modal ---------- */
+.veil{position:fixed;inset:0;background:rgba(10,8,6,.62);backdrop-filter:blur(3px);display:grid;place-items:center;padding:16px;z-index:50;opacity:0;transition:opacity .25s}
+.veil.open{opacity:1}
+.card{
+  position:relative;width:min(760px,100%);max-height:calc(100vh - 32px);overflow:auto;
+  background:var(--paper);color:var(--paper-ink);
+  background-image:repeating-linear-gradient(transparent 0 31px,var(--paper-rule) 31px 32px);
+  background-position:0 92px;
+  border-radius:3px;padding:28px 32px 40px;
+  box-shadow:0 30px 70px rgba(0,0,0,.5);
+  transform:translateY(16px) rotate(-.6deg);transition:transform .35s cubic-bezier(.2,.8,.2,1);
+}
+.veil.open .card{transform:none}
+.card::before{content:"";position:absolute;left:0;right:0;top:84px;height:2px;background:var(--card-red);opacity:.75}
+.card .hole{position:absolute;left:50%;bottom:12px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:rgba(10,8,6,.6);box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+.card-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;height:56px}
+.callno{font-family:var(--f-mono);font-size:13px;letter-spacing:.06em;line-height:1.35;white-space:pre}
+.close{border:0;background:transparent;font-size:26px;line-height:1;cursor:pointer;padding:4px 8px;color:var(--paper-ink)}
+.card-body{display:grid;grid-template-columns:170px minmax(0,1fr);gap:28px;margin-top:20px}
+.card-cover{position:relative;width:170px;height:250px;border-radius:1px 3px 3px 1px;box-shadow:6px 6px 14px rgba(0,0,0,.3)}
+.card h2{font-family:var(--f-display);font-weight:400;font-size:32px;line-height:1.08;margin:0 0 6px;text-wrap:balance}
+.card .by{font-size:19px;font-style:italic;margin:0 0 18px}
+.meta{font-family:var(--f-mono);font-size:12.5px;letter-spacing:.04em;display:grid;grid-template-columns:auto 1fr;gap:4px 16px;margin:0 0 18px}
+.meta dt{opacity:.6;text-transform:uppercase}
+.meta dd{margin:0;font-variant-numeric:tabular-nums}
+.stars{color:#b0802a;letter-spacing:2px;font-size:17px}
+.stars .off{opacity:.25}
+.notes{font-size:18px;line-height:32px;margin:0;white-space:pre-wrap}
+.notes.none{opacity:.55;font-style:italic}
+.card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+.card .btn{color:var(--paper-ink);border-color:color-mix(in srgb,var(--paper-ink) 30%,transparent);background:transparent;font-size:14px}
+.card .btn:hover{background:color-mix(in srgb,var(--paper-ink) 8%,transparent)}
+.card .btn.primary{background:var(--paper-ink);color:var(--paper)}
+.card .btn.danger{border-color:var(--card-red);color:var(--card-red)}
+
+/* Form */
+.form{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-top:22px;background:var(--paper)}
+.form h2{grid-column:1/-1;margin:0}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field.wide{grid-column:1/-1}
+.field label{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.7}
+.field input,.field select,.field textarea{border:1px solid color-mix(in srgb,var(--paper-ink) 25%,transparent);background:color-mix(in srgb,var(--paper) 70%,white);border-radius:3px;padding:8px 10px;color:var(--paper-ink);font-size:16px;min-width:0;color-scheme:light}
+.field textarea{min-height:110px;resize:vertical;line-height:1.5}
+.check{flex-direction:row;align-items:center;gap:8px}
+.lookup{display:flex;gap:8px}
+.lookup input{flex:1}
+.hint{font-size:13.5px;font-style:italic;opacity:.7;margin:0}
+.err{color:var(--card-red);font-size:14px;margin:0;grid-column:1/-1}
+.results{grid-column:1/-1;display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+.results button{flex:none;width:84px;border:1px solid color-mix(in srgb,var(--paper-ink) 20%,transparent);background:transparent;padding:4px;cursor:pointer;text-align:left;font-size:11px;line-height:1.25;border-radius:3px;color:var(--paper-ink)}
+.results img{width:100%;height:110px;object-fit:cover;display:block;margin-bottom:4px;background:#ddd}
+
+@media (max-width:720px){
+  .page{padding-block:28px 56px}
+  .masthead{grid-template-columns:1fr}
+  .controls{align-items:flex-start;flex-direction:row;flex-wrap:wrap}
+  .case{padding:16px 10px 0}
+  .ledge{margin:0 -10px}
+  .row{padding:26px 12px 0;min-height:250px}
+  .row.all{padding-top:0}
+  .nudge{width:32px;height:32px}
+  .fade{width:44px}
+  .card{padding:22px 18px 40px}
+  .card-body{grid-template-columns:1fr}
+  .card-cover{width:140px;height:206px}
+  .form{grid-template-columns:1fr}
+  .callno{font-size:11.5px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="masthead">
+    <div style="min-width:0">
+      <p class="eyebrow">A personal archive</p>
+      <h1 id="owner">Rushi's Library</h1>
+      <p class="tally" id="tally"></p>
+    </div>
+    <div class="controls">
+      <div class="rooms" role="group" aria-label="Room">
+        <span>Room</span>
+        <button class="swatch reading" data-room="reading" title="Reading Room" aria-label="Reading Room"></button>
+        <button class="swatch study" data-room="study" title="The Study" aria-label="The Study"></button>
+        <button class="swatch atelier" data-room="atelier" title="Atelier" aria-label="Atelier"></button>
+      </div>
+      <button class="btn" id="curateBtn" aria-pressed="false">Curate shelves</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <label class="search">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+      <input id="q" type="search" placeholder="Find a title or author" autocomplete="off">
+    </label>
+    <nav class="chips" id="chips" aria-label="Jump to shelf"></nav>
+  </div>
+
+  <div class="curate-bar" id="curateBar" hidden>
+    <p>Curating. Add books from any shelf plank, rename shelves, or keep a backup.</p>
+    <button class="btn" id="exportBtn">Export backup</button>
+    <label class="btn" for="importFile" style="cursor:pointer">Import backup</label>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+    <button class="btn" id="resetBtn">Reset to sample</button>
+  </div>
+  <p class="notice" id="sampleNotice" hidden>These are sample books to show the layout. <button id="startCurate">Start curating</button> to make the shelves yours.</p>
+
+  <main class="case" id="case" aria-label="Bookcase"></main>
+  <button class="add-shelf" id="addShelf" hidden>+ Add a new shelf</button>
+
+  <footer id="foot"></footer>
+</div>
+
+<div class="veil" id="veil" hidden>
+  <article class="card" id="card" role="dialog" aria-modal="true" aria-labelledby="cardTitle"></article>
+</div>
+
+<script>
+(() => {
+const KEY = 'vlib.v1', ROOMKEY = 'vlib.room', COVERKEY = 'vlib.covers';
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+};
+const uid = () => Math.random().toString(36).slice(2,9);
+
+const SAMPLE = {
+  sample: true,
+  owner: "Rushi's Library",
+  shelves: [
+    {id:'brand', name:'Brand & Marketing', code:'MKT'},
+    {id:'cosmos', name:'The Cosmos', code:'AST'},
+    {id:'fiction', name:'Fiction', code:'FIC'},
+    {id:'ideas', name:'Ideas & Essays', code:'IDE'},
+    {id:'now', name:'On the Nightstand', code:'NOW'},
+    {id:'next', name:'Want to Read', code:'TBR'}
+  ],
+  books: [
+    ['This Is Marketing','Seth Godin',2018,288,'brand',5,'2025-02',1],
+    ['Alchemy','Rory Sutherland',2019,368,'brand',5,'2025-04',0],
+    ['How Brands Grow','Byron Sharp',2010,228,'brand',4,'2024-11',0],
+    ['Positioning','Al Ries & Jack Trout',1981,224,'brand',4,'2024-08',0],
+    ['Building a StoryBrand','Donald Miller',2017,240,'brand',3,'2024-06',0],
+    ['Contagious','Jonah Berger',2013,256,'brand',4,'2024-03',0],
+    ['Made to Stick','Chip Heath & Dan Heath',2007,291,'brand',4,'2023-12',0],
+    ['Hooked','Nir Eyal',2014,256,'brand',3,'2023-09',0],
+    ['Cosmos','Carl Sagan',1980,365,'cosmos',5,'2025-06',1],
+    ['Pale Blue Dot','Carl Sagan',1994,429,'cosmos',5,'2025-08',0],
+    ['A Brief History of Time','Stephen Hawking',1988,212,'cosmos',4,'2023-05',0],
+    ['Astrophysics for People in a Hurry','Neil deGrasse Tyson',2017,222,'cosmos',4,'2024-01',0],
+    ['The Elegant Universe','Brian Greene',1999,448,'cosmos',4,'2024-10',0],
+    ['Seven Brief Lessons on Physics','Carlo Rovelli',2014,96,'cosmos',5,'2025-01',0],
+    ['The Remains of the Day','Kazuo Ishiguro',1989,245,'fiction',5,'2024-07',0],
+    ['Klara and the Sun','Kazuo Ishiguro',2021,303,'fiction',4,'2025-03',0],
+    ['Norwegian Wood','Haruki Murakami',1987,296,'fiction',4,'2023-11',0],
+    ['The God of Small Things','Arundhati Roy',1997,340,'fiction',5,'2024-04',1],
+    ['Project Hail Mary','Andy Weir',2021,476,'fiction',5,'2025-05',0],
+    ['Circe','Madeline Miller',2018,393,'fiction',4,'2024-09',0],
+    ['The Midnight Library','Matt Haig',2020,288,'fiction',3,'2023-08',0],
+    ['The Little Prince','Antoine de Saint-Exupéry',1943,96,'fiction',5,'2022-12',0],
+    ['Sapiens','Yuval Noah Harari',2011,443,'ideas',4,'2023-04',0],
+    ['Thinking, Fast and Slow','Daniel Kahneman',2011,499,'ideas',5,'2024-12',0],
+    ['The Psychology of Money','Morgan Housel',2020,256,'ideas',4,'2024-05',0],
+    ['Atomic Habits','James Clear',2018,320,'ideas',4,'2023-07',0],
+    ['Steal Like an Artist','Austin Kleon',2012,160,'ideas',4,'2023-03',1],
+    ['Range','David Epstein',2019,352,'now',0,'',1],
+    ['Dune','Frank Herbert',1965,412,'next',0,'',0],
+    ['Ogilvy on Advertising','David Ogilvy',1983,224,'next',0,'',0],
+    ['The Overstory','Richard Powers',2018,502,'next',0,'',0]
+  ].map(([title,author,year,pages,shelf,rating,finished,fav]) => ({id:uid(),title,author,year,pages,shelf,rating,finished,fav:!!fav,notes:'',cover:''}))
+};
+
+let data = load();
+let curating = false;
+let expanded = new Set();
+try { expanded = new Set(JSON.parse(store.get('vlib.expanded') || '[]')); } catch(e){}
+const saveExpanded = () => store.set('vlib.expanded', JSON.stringify([...expanded]));
+let coverCache = {};
+try { coverCache = JSON.parse(store.get(COVERKEY) || '{}'); } catch(e){}
+
+function load(){
+  try { const d = JSON.parse(store.get(KEY)); if (d && d.shelves && d.books) return d; } catch(e){}
+  return JSON.parse(JSON.stringify(SAMPLE));
+}
+function save(){ data.sample = false; store.set(KEY, JSON.stringify(data)); }
+
+/* ---------- helpers ---------- */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function hash(s){ let h = 2166136261; for (const ch of s) { h ^= ch.charCodeAt(0); h = Math.imul(h,16777619); } return h >>> 0; }
+const CLOTH = ['#7b2d26','#2f4858','#3c5a3a','#8a6a2f','#4b3b5c','#a0522d','#1f3d5a','#6b4f3a','#2e5e5a','#8c3b4a','#c2a15a','#33302c','#d8cdb5','#5d6b3a','#b5643c','#24434f','#9b8b6e','#5a2236'];
+function lum(hex){ const n = parseInt(hex.slice(1),16); const r=(n>>16)/255,g=((n>>8)&255)/255,b=(n&255)/255; return .2126*r+.7152*g+.0722*b; }
+function look(b){
+  const h = hash(b.title + b.author);
+  const c = b.color || CLOTH[h % CLOTH.length];
+  return { c, t: lum(c) > .55 ? '#2a2018' : '#f4ead7', h };
+}
+const shelfOf = id => data.shelves.find(s => s.id === id);
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtMonth(v){ if(!v) return ''; const [y,m] = v.split('-'); return m ? `${MONTHS[+m-1]} ${y}` : y; }
+function callNumber(b){
+  const s = shelfOf(b.shelf);
+  const code = (s?.code || s?.name || 'GEN').replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase();
+  const last = (b.author||'Anon').split('&')[0].trim().split(' ').pop().replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase();
+  const cls = String(100 + (hash(b.title) % 800)) + '.' + String(hash(b.author||'x') % 100).padStart(2,'0');
+  return `${code} ${cls}\n${last}${b.year ? ' ' + b.year : ''}`;
+}
+function words(n){ return ['no','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'][n] ?? String(n); }
+
+/* ---------- covers (real ones via Open Library when reachable) ---------- */
+function coverKey(b){ return (b.title + '|' + b.author).toLowerCase(); }
+function coverHTML(b){
+  const {c,t} = look(b);
+  const url = b.cover || coverCache[coverKey(b)] || '';
+  return `<div class="cover" style="--c:${c};--t:${t}" data-cover="${esc(b.id)}">
+    <div class="ct">${esc(b.title)}</div>
+    <div><div class="cr"></div><div class="ca">${esc(b.author)}</div></div>
+    ${url ? `<img src="${esc(url)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+  </div>`;
+}
+const pending = new Set();
+async function findCover(b){
+  const k = coverKey(b);
+  if (b.cover || k in coverCache || pending.has(k)) return;
+  pending.add(k);
+  try {
+    const r = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(b.title)}&author=${encodeURIComponent(b.author)}&limit=1&fields=cover_i`);
+    const j = await r.json();
+    const id = j.docs?.[0]?.cover_i;
+    coverCache[k] = id ? `https://covers.openlibrary.org/b/id/${id}-L.jpg` : '';
+    store.set(COVERKEY, JSON.stringify(coverCache));
+    if (id) document.querySelectorAll(`[data-cover="${b.id}"]`).forEach(el => {
+      if (!el.querySelector('img')) el.insertAdjacentHTML('beforeend', `<img src="${coverCache[k]}" alt="" onerror="this.remove()">`);
+    });
+  } catch(e) { /* offline or blocked: the typographic cover stays */ }
+}
+
+/* ---------- render ---------- */
+const DECOR = [
+  () => `<div class="decor plant" aria-hidden="true"><div class="leaf" style="transform:rotate(-28deg)"></div><div class="leaf" style="transform:rotate(-6deg);height:78px"></div><div class="leaf" style="transform:rotate(18deg);height:70px"></div><div class="leaf" style="transform:rotate(40deg);height:54px"></div><div class="pot"></div></div>`,
+  () => `<div class="decor globe" aria-hidden="true"><div class="ball"></div><div class="ring"></div><div class="stem"></div><div class="base"></div></div>`,
+  () => `<div class="decor candle" aria-hidden="true"><div class="flame"></div><div class="wax"></div><div class="dish"></div></div>`,
+  () => `<div class="decor stack" aria-hidden="true"><i style="width:120px;background:#2f4858"></i><i style="width:132px;background:#8a6a2f"></i><i style="width:116px;background:#7b2d26"></i></div>`,
+  () => `<div class="decor bookend" aria-hidden="true"></div>`
+];
+
+function spineHTML(b, i, arr){
+  const {c,t,h} = look(b);
+  const p = Math.min(Math.max(b.pages || 250, 80), 650);
+  const H = Math.round(176 + (p/650)*52 + (h % 16));
+  const W = Math.round(24 + (p/650)*30);
+  const style = ['s-bands','s-label','s-cap','s-bands'][h % 4];
+  const fs = b.title.length > 26 ? 12 : b.title.length > 16 ? 13.5 : 15;
+  const lean = i === arr.length - 1 && arr.length > 3 && h % 3 === 0 ? ' lean' : '';
+  const last = (b.author||'').split('&')[0].trim().split(' ').pop();
+  return `<button class="spine ${style}${lean}" data-id="${b.id}" style="--c:${c};--t:${t};--h:${H}px;--w:${W}px;--fs:${fs}px" aria-label="${esc(b.title)} by ${esc(b.author)}">
+    <span class="t">${esc(b.title)}</span><span class="a">${esc(last)}</span></button>`;
+}
+function faceHTML(b){
+  return `<button class="faceout" data-id="${b.id}" aria-label="${esc(b.title)} by ${esc(b.author)}">${coverHTML(b)}</button>`;
+}
+
+function render(){
+  const root = document.documentElement;
+  const caseEl = document.getElementById('case');
+  const read = data.books.filter(b => b.shelf !== 'next');
+  const pages = read.reduce((s,b) => s + (+b.pages||0), 0);
+  const rated = read.filter(b => b.rating > 0);
+  const avg = rated.length ? (rated.reduce((s,b)=>s+b.rating,0)/rated.length).toFixed(1) : '—';
+  document.getElementById('owner').textContent = data.owner || 'My Library';
+  document.title = data.owner || 'My Library';
+  document.getElementById('tally').innerHTML =
+    `<b>${read.length}</b> volumes, <b>${pages.toLocaleString()}</b> pages, across ${words(data.shelves.length)} shelves. Average rating <b>${avg}</b>.`;
+  document.getElementById('sampleNotice').hidden = !data.sample;
+
+  document.getElementById('chips').innerHTML = data.shelves.map(s =>
+    `<button class="chip" data-jump="${s.id}">${esc(s.name)}</button>`).join('');
+
+  caseEl.innerHTML = '<div class="grain"></div>' + data.shelves.map((s, si) => {
+    const books = data.books.filter(b => b.shelf === s.id);
+    const faces = books.filter(b => b.fav);
+    const spines = books.filter(b => !b.fav);
+    let inner = '';
+    if (!books.length) inner = `<p class="empty-shelf">An empty shelf, waiting.${curating ? '' : ''}</p>`;
+    else {
+      const half = Math.ceil(spines.length * 0.55);
+      inner = spines.slice(0, half).map(spineHTML).join('')
+        + faces.map(faceHTML).join('')
+        + spines.slice(half).map((b,i,a) => spineHTML(b,i,a)).join('')
+        + DECOR[si % DECOR.length]();
+    }
+    const tools = curating ? `<div class="ledge-tools">
+        <button data-act="add" data-shelf="${s.id}">+ Book</button>
+        <button data-act="rename" data-shelf="${s.id}">Rename</button>
+        ${si > 0 ? `<button data-act="up" data-shelf="${s.id}">Up</button>` : ''}
+        <button data-act="delshelf" data-shelf="${s.id}" class="">Remove</button>
+      </div>` : '';
+    return `<section class="shelf${expanded.has(s.id) ? ' all' : ''}" id="shelf-${s.id}" aria-label="${esc(s.name)}">
+      <div class="bay">
+        <div class="fade l"></div><div class="fade r"></div>
+        <button class="nudge l" data-scroll="-1" aria-label="Earlier books on ${esc(s.name)}" tabindex="-1"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 2L4 7l5 5"/></svg></button>
+        <button class="nudge r" data-scroll="1" aria-label="More books on ${esc(s.name)}" tabindex="-1"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 2l5 5-5 5"/></svg></button>
+        <div class="row${expanded.has(s.id) ? ' all' : ''}">${inner}</div>
+      </div>
+      <div class="ledge"><span class="plaque" data-plaque="${s.id}">${esc(s.name)} · ${books.length}</span><button class="showall" data-showall="${s.id}" hidden></button>${tools}</div>
+    </section>`;
+  }).join('');
+
+  document.getElementById('addShelf').hidden = !curating;
+  document.getElementById('curateBar').hidden = !curating;
+  const ob = document.getElementById('owner');
+  ob.contentEditable = curating ? 'true' : 'false';
+  document.getElementById('foot').textContent = `Catalogued by hand. ${data.books.filter(b=>b.shelf==='next').length ? '' : ''}Last arranged ${new Date().toLocaleDateString(undefined,{month:'long',year:'numeric'})}.`;
+
+  data.books.filter(b => b.fav).forEach(findCover);
+  document.querySelectorAll('.shelf .row').forEach(row => {
+    row.addEventListener('scroll', () => updateOverflow(row.closest('.shelf')), {passive:true});
+    ro.observe(row);
+  });
+  updateAllOverflow();
+  applySearch();
+}
+
+/* ---------- overflow: fades, arrows, show all ---------- */
+const ro = new ResizeObserver(() => updateAllOverflow());
+function updateOverflow(shelf){
+  const row = shelf.querySelector('.row'), btn = shelf.querySelector('.showall');
+  const id = btn.dataset.showall, n = data.books.filter(b => b.shelf === id).length;
+  const open = expanded.has(id);
+  const over = row.scrollWidth > row.clientWidth + 4;
+  shelf.classList.toggle('more-left', !open && over && row.scrollLeft > 4);
+  shelf.classList.toggle('more-right', !open && over && row.scrollLeft + row.clientWidth < row.scrollWidth - 4);
+  btn.hidden = !(open || over);
+  btn.textContent = open ? 'One row' : `Show all ${n}`;
+  btn.setAttribute('aria-expanded', open);
+}
+function updateAllOverflow(){ document.querySelectorAll('.shelf').forEach(updateOverflow); }
+
+function applySearch(){
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  document.querySelectorAll('.spine,.faceout').forEach(el => {
+    const b = data.books.find(x => x.id === el.dataset.id);
+    const m = !q || (b.title + ' ' + b.author).toLowerCase().includes(q);
+    el.classList.toggle('dim', !!q && !m);
+    el.classList.toggle('hit', !!q && m);
+  });
+  if (q) {
+    const first = document.querySelector('.spine.hit,.faceout.hit');
+    first?.scrollIntoView({block:'nearest', inline:'center', behavior:'smooth'});
+  }
+}
+
+/* ---------- modal ---------- */
+const veil = document.getElementById('veil'), card = document.getElementById('card');
+let lastFocus = null;
+function openModal(html){
+  lastFocus = document.activeElement;
+  card.innerHTML = html + '<div class="hole" aria-hidden="true"></div>';
+  veil.hidden = false;
+  requestAnimationFrame(() => veil.classList.add('open'));
+  (card.querySelector('[autofocus]') || card.querySelector('.close'))?.focus();
+}
+function closeModal(){
+  veil.classList.remove('open');
+  setTimeout(() => { veil.hidden = true; card.innerHTML = ''; }, 220);
+  lastFocus?.focus?.();
+}
+veil.addEventListener('click', e => { if (e.target === veil) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !veil.hidden) closeModal(); });
+
+function stars(n){ let s=''; for (let i=1;i<=5;i++) s += i<=n ? '★' : '<span class="off">★</span>'; return `<span class="stars" aria-label="${n} of 5">${s}</span>`; }
+
+function showBook(id){
+  const b = data.books.find(x => x.id === id); if (!b) return;
+  const s = shelfOf(b.shelf);
+  findCover(b);
+  openModal(`
+    <div class="card-head"><div class="callno">${esc(callNumber(b))}</div><button class="close" aria-label="Close">×</button></div>
+    <div class="card-body">
+      <div class="card-cover">${coverHTML(b)}</div>
+      <div style="min-width:0">
+        <h2 id="cardTitle">${esc(b.title)}</h2>
+        <p class="by">${esc(b.author)}</p>
+        <dl class="meta">
+          ${b.year ? `<dt>Published</dt><dd>${esc(b.year)}</dd>` : ''}
+          ${b.pages ? `<dt>Pages</dt><dd>${esc(b.pages)}</dd>` : ''}
+          <dt>Shelf</dt><dd>${esc(s?.name || '')}</dd>
+          ${b.finished ? `<dt>Finished</dt><dd>${esc(fmtMonth(b.finished))}</dd>` : ''}
+          ${b.rating ? `<dt>Rating</dt><dd>${stars(b.rating)}</dd>` : ''}
+        </dl>
+        <p class="notes ${b.notes ? '' : 'none'}">${b.notes ? esc(b.notes) : 'No notes on this one yet.'}</p>
+        <div class="card-actions">
+          <button class="btn" data-act="edit" data-id="${b.id}">Edit</button>
+          <button class="btn" data-act="fav" data-id="${b.id}">${b.fav ? 'Turn spine out' : 'Display cover out'}</button>
+          <button class="btn danger" data-act="delbook" data-id="${b.id}">Remove</button>
+        </div>
+      </div>
+    </div>`);
+}
+
+function showForm(b, shelfId){
+  const isNew = !b;
+  b = b || {title:'',author:'',year:'',pages:'',shelf:shelfId || data.shelves[0]?.id,rating:0,finished:'',notes:'',cover:'',fav:false};
+  openModal(`
+    <div class="card-head"><div class="callno">${isNew ? 'NEW ACCESSION' : esc(callNumber(b))}</div><button class="close" aria-label="Close">×</button></div>
+    <form class="form" id="bookForm" novalidate>
+      <h2 id="cardTitle">${isNew ? 'Add a book' : 'Edit book'}</h2>
+      <div class="field wide">
+        <label for="f-lookup">Look it up</label>
+        <div class="lookup"><input id="f-lookup" placeholder="Type a title, then search" value=""><button type="button" class="btn" id="lookupBtn">Search</button></div>
+        <p class="hint" id="lookupHint">Fills in author, year, pages and cover from Open Library.</p>
+      </div>
+      <div class="results" id="results"></div>
+      <div class="field wide"><label for="f-title">Title</label><input id="f-title" value="${esc(b.title)}" autofocus required></div>
+      <div class="field wide"><label for="f-author">Author</label><input id="f-author" value="${esc(b.author)}"></div>
+      <div class="field"><label for="f-year">Year published</label><input id="f-year" inputmode="numeric" value="${esc(b.year)}"></div>
+      <div class="field"><label for="f-pages">Pages</label><input id="f-pages" inputmode="numeric" value="${esc(b.pages)}"></div>
+      <div class="field"><label for="f-shelf">Shelf</label><select id="f-shelf">${data.shelves.map(s => `<option value="${s.id}" ${s.id===b.shelf?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+      <div class="field"><label for="f-rating">Rating</label><select id="f-rating">${[0,1,2,3,4,5].map(n => `<option value="${n}" ${n==b.rating?'selected':''}>${n ? '★'.repeat(n) : 'Unrated'}</option>`).join('')}</select></div>
+      <div class="field"><label for="f-finished">Finished</label><input id="f-finished" type="month" value="${esc(b.finished)}"></div>
+      <div class="field"><label for="f-color">Spine colour</label><input id="f-color" type="color" value="${esc(look(b.title ? b : {title:'x',author:'y'}).c)}"></div>
+      <div class="field wide"><label for="f-cover">Cover image link (optional)</label><input id="f-cover" value="${esc(b.cover)}" placeholder="https://"></div>
+      <div class="field wide"><label for="f-notes">Notes, a favourite line, what it changed</label><textarea id="f-notes">${esc(b.notes)}</textarea></div>
+      <div class="field wide check"><input type="checkbox" id="f-fav" ${b.fav?'checked':''}><label for="f-fav" style="text-transform:none;letter-spacing:0;font-family:var(--f-body);font-size:16px;opacity:1">Display with the cover facing out</label></div>
+      <p class="err" id="formErr" hidden></p>
+      <div class="card-actions" style="grid-column:1/-1"><button class="btn primary" type="submit">${isNew ? 'Shelve it' : 'Save changes'}</button><button class="btn close-btn" type="button">Cancel</button></div>
+    </form>`);
+  const f = document.getElementById('bookForm');
+  const colorTouched = { v: !!b.color };
+  f.querySelector('#f-color').addEventListener('input', () => colorTouched.v = true);
+  f.querySelector('.close-btn').onclick = closeModal;
+  const doLookup = () => lookup(f.querySelector('#f-lookup').value || f.querySelector('#f-title').value);
+  f.querySelector('#lookupBtn').onclick = doLookup;
+  f.querySelector('#f-lookup').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); doLookup(); } });
+  f.addEventListener('submit', e => {
+    e.preventDefault();
+    const v = id => f.querySelector(id).value.trim();
+    if (!v('#f-title')) { const er = f.querySelector('#formErr'); er.textContent = 'Give the book a title before shelving it.'; er.hidden = false; return; }
+    const rec = isNew ? {id:uid()} : data.books.find(x => x.id === b.id);
+    Object.assign(rec, {
+      title:v('#f-title'), author:v('#f-author'), year:v('#f-year') ? +v('#f-year') || v('#f-year') : '',
+      pages:+v('#f-pages') || '', shelf:v('#f-shelf'), rating:+v('#f-rating'), finished:v('#f-finished'),
+      cover:v('#f-cover'), notes:f.querySelector('#f-notes').value, fav:f.querySelector('#f-fav').checked
+    });
+    if (colorTouched.v) rec.color = v('#f-color');
+    if (isNew) data.books.push(rec);
+    save(); closeModal(); render();
+    setTimeout(() => { const el = document.querySelector(`[data-id="${rec.id}"]`); el?.scrollIntoView({block:'center',inline:'center',behavior:'smooth'}); el?.classList.add('hit'); setTimeout(()=>el?.classList.remove('hit'),1400); }, 260);
+  });
+}
+
+async function lookup(q){
+  const hint = document.getElementById('lookupHint'), res = document.getElementById('results');
+  if (!q.trim()) { hint.textContent = 'Type a title to search for.'; return; }
+  hint.textContent = 'Searching Open Library…';
+  try {
+    const r = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8&fields=title,author_name,first_publish_year,number_of_pages_median,cover_i`);
+    const j = await r.json();
+    if (!j.docs?.length) { hint.textContent = 'No matches. Fill the fields in by hand.'; res.innerHTML=''; return; }
+    hint.textContent = 'Pick the right edition to fill the form.';
+    res.innerHTML = j.docs.map((d,i) => `<button type="button" data-i="${i}">${d.cover_i ? `<img src="https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg" alt="">` : '<img alt="">'}${esc(d.title)}</button>`).join('');
+    res.querySelectorAll('button').forEach(btn => btn.onclick = () => {
+      const d = j.docs[+btn.dataset.i], set = (id,val) => { if (val) document.getElementById(id).value = val; };
+      set('f-title', d.title); set('f-author', (d.author_name||[]).join(' & '));
+      set('f-year', d.first_publish_year); set('f-pages', d.number_of_pages_median);
+      if (d.cover_i) set('f-cover', `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg`);
+      res.querySelectorAll('button').forEach(x => x.style.outline = ''); btn.style.outline = '2px solid currentColor';
+    });
+  } catch(e) {
+    hint.textContent = 'Search could not reach Open Library from here. It works when the page is opened from your own computer or website; for now, fill the fields in by hand.';
+  }
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, .chip'); if (!t) return;
+  if (t.matches('.close')) return closeModal();
+  if (t.dataset.jump) return document.getElementById('shelf-' + t.dataset.jump)?.scrollIntoView({behavior:'smooth', block:'start'});
+  if (t.matches('.spine, .faceout')) return showBook(t.dataset.id);
+  if (t.dataset.room) return setRoom(t.dataset.room);
+  if (t.dataset.scroll) { const row = t.closest('.bay').querySelector('.row'); return row.scrollBy({left: +t.dataset.scroll * row.clientWidth * 0.8, behavior: 'smooth'}); }
+  if (t.dataset.showall) {
+    const id = t.dataset.showall, shelf = t.closest('.shelf'), row = shelf.querySelector('.row');
+    if (expanded.has(id)) expanded.delete(id); else expanded.add(id);
+    saveExpanded();
+    const open = expanded.has(id);
+    row.classList.toggle('all', open); shelf.classList.toggle('all', open);
+    if (open) row.scrollLeft = 0; else shelf.scrollIntoView({block:'nearest', behavior:'smooth'});
+    return updateOverflow(shelf);
+  }
+  const act = t.dataset.act; if (!act) return;
+  const sid = t.dataset.shelf, bid = t.dataset.id;
+  if (act === 'add') showForm(null, sid);
+  if (act === 'edit') showForm(data.books.find(b => b.id === bid));
+  if (act === 'fav') { const b = data.books.find(x => x.id === bid); b.fav = !b.fav; save(); render(); showBook(bid); }
+  if (act === 'delbook') {
+    if (t.dataset.armed) { data.books = data.books.filter(b => b.id !== bid); save(); closeModal(); render(); }
+    else { t.dataset.armed = '1'; t.textContent = 'Click again to remove'; }
+  }
+  if (act === 'up') { const i = data.shelves.findIndex(s => s.id === sid); [data.shelves[i-1], data.shelves[i]] = [data.shelves[i], data.shelves[i-1]]; save(); render(); }
+  if (act === 'rename') {
+    const p = document.querySelector(`[data-plaque="${sid}"]`), s = shelfOf(sid);
+    p.innerHTML = `<input id="rn-${sid}" value="${esc(s.name)}" aria-label="Shelf name">`;
+    const inp = p.querySelector('input'); inp.focus(); inp.select();
+    const done = () => { const v = inp.value.trim(); if (v) { s.name = v; s.code = v.replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase(); save(); } render(); };
+    inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') inp.blur(); if (ev.key === 'Escape') { inp.value = ''; inp.blur(); } });
+    inp.addEventListener('blur', done, {once:true});
+  }
+  if (act === 'delshelf') {
+    const n = data.books.filter(b => b.shelf === sid).length;
+    if (data.shelves.length === 1) { t.textContent = 'Keep at least one'; return; }
+    if (t.dataset.armed) { data.shelves = data.shelves.filter(s => s.id !== sid); data.books = data.books.filter(b => b.shelf !== sid); save(); render(); }
+    else { t.dataset.armed = '1'; t.classList.add('danger'); t.textContent = n ? `Remove with ${n} book${n>1?'s':''}?` : 'Confirm remove'; }
+  }
+});
+
+document.getElementById('q').addEventListener('input', applySearch);
+function setCurate(on){
+  curating = on;
+  const b = document.getElementById('curateBtn');
+  b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.textContent = on ? 'Done curating' : 'Curate shelves';
+  render();
+}
+document.getElementById('curateBtn').onclick = () => setCurate(!curating);
+document.getElementById('startCurate').onclick = () => setCurate(true);
+document.getElementById('addShelf').onclick = () => {
+  const id = uid(); data.shelves.push({id, name:'New Shelf', code:'NEW'}); save(); render();
+  document.querySelector(`[data-act="rename"][data-shelf="${id}"]`)?.click();
+  document.getElementById('shelf-' + id)?.scrollIntoView({behavior:'smooth', block:'center'});
+};
+document.getElementById('owner').addEventListener('blur', e => {
+  if (!curating) return; const v = e.target.textContent.trim(); if (v && v !== data.owner) { data.owner = v; save(); render(); }
+});
+document.getElementById('owner').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
+
+document.getElementById('exportBtn').onclick = () => {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'my-library.json';
+  document.body.appendChild(a); a.click(); a.remove();
+};
+document.getElementById('importFile').onchange = e => {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = () => { try { const d = JSON.parse(r.result); if (!d.shelves || !d.books) throw 0; data = d; save(); render(); } catch(err) { document.querySelector('.curate-bar p').textContent = 'That file is not a library backup. Choose a .json file made with Export backup.'; } };
+  r.readAsText(file); e.target.value = '';
+};
+const resetBtn = document.getElementById('resetBtn');
+resetBtn.onclick = () => {
+  if (!resetBtn.dataset.armed) { resetBtn.dataset.armed = '1'; resetBtn.textContent = 'Click again: this replaces your shelves'; return; }
+  data = JSON.parse(JSON.stringify(SAMPLE)); data.books.forEach(b => b.id = uid());
+  store.set(KEY, ''); delete resetBtn.dataset.armed; resetBtn.textContent = 'Reset to sample'; render();
+};
+
+/* ---------- rooms ---------- */
+function setRoom(r){
+  if (r) document.documentElement.setAttribute('data-room', r); else document.documentElement.removeAttribute('data-room');
+  store.set(ROOMKEY, r || '');
+  const active = r || (matchMedia('(prefers-color-scheme: dark)').matches ? 'reading' : 'atelier');
+  document.querySelectorAll('.swatch').forEach(s => s.setAttribute('aria-pressed', s.dataset.room === active));
+}
+setRoom(store.get(ROOMKEY) || '');
+render();
+})();
+</script>
+</body>
+</html>
