@@ -282,7 +282,7 @@ footer{margin-top:60px;text-align:center;font-size:14px;color:var(--muted);font-
 }
 .veil.open .card{transform:none}
 .card::before{content:"";position:absolute;left:0;right:0;top:84px;height:2px;background:var(--card-red);opacity:.75}
-.card .hole{position:absolute;left:50%;bottom:12px;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:rgba(10,8,6,.6);box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+.card .hole{position:relative;display:block;margin:26px auto -28px;width:16px;height:16px;border-radius:50%;background:rgba(10,8,6,.6);box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
 .card-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;height:56px}
 .callno{font-family:var(--f-mono);font-size:13px;letter-spacing:.06em;line-height:1.35;white-space:pre}
 .close{border:0;background:transparent;font-size:26px;line-height:1;cursor:pointer;padding:4px 8px;color:var(--paper-ink)}
@@ -320,6 +320,32 @@ footer{margin-top:60px;text-align:center;font-size:14px;color:var(--muted);font-
 .results button{flex:none;width:84px;border:1px solid color-mix(in srgb,var(--paper-ink) 20%,transparent);background:transparent;padding:4px;cursor:pointer;text-align:left;font-size:11px;line-height:1.25;border-radius:3px;color:var(--paper-ink)}
 .results img{width:100%;height:110px;object-fit:cover;display:block;margin-bottom:4px;background:#ddd}
 
+/* Curate: drag and drop */
+body.curating .spine, body.curating .faceout{cursor:grab;touch-action:none}
+body.dragging, body.dragging *{cursor:grabbing!important;user-select:none}
+.placeholder{opacity:.28;outline:2px dashed var(--accent);outline-offset:2px}
+.ghost{position:fixed!important;left:0;top:0;margin:0!important;pointer-events:none;z-index:200;box-shadow:0 18px 34px rgba(0,0,0,.5);transition:none!important}
+/* Currently reading ribbon */
+.faceout.reading::after{content:"";position:absolute;top:-5px;right:18px;width:12px;height:48px;background:#9b2c25;z-index:3;clip-path:polygon(0 0,100% 0,100% 100%,50% 80%,0 100%);box-shadow:0 2px 3px rgba(0,0,0,.3)}
+/* Toast */
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);transform:translate(-50%,20px);opacity:0;background:var(--paper);color:var(--paper-ink);padding:10px 18px;border-radius:999px;font-size:15px;box-shadow:0 10px 30px rgba(0,0,0,.35);transition:opacity .25s,transform .25s;z-index:120;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+/* Spine colour picker */
+.colorpick{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center}
+.swatches{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.sw{width:28px;height:28px;border-radius:50%;border:0;cursor:pointer;padding:0;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);background:var(--sw)}
+.sw[aria-checked="true"]{outline:2px solid var(--paper-ink);outline-offset:3px}
+.sw[aria-checked="true"]::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;font-size:14px;color:var(--ck,#fff)}
+.sw.auto{width:auto;border-radius:999px;padding:0 12px 0 4px;display:inline-flex;align-items:center;gap:7px;background:transparent;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--paper-ink) 30%,transparent);font-size:13.5px;color:var(--paper-ink);height:30px}
+.sw.auto i{width:22px;height:22px;border-radius:50%;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.sw.auto[aria-checked="true"]::after{content:none}
+.sw.custom{background:conic-gradient(#c0463d,#c2a15a,#3c5a3a,#2f4858,#4b3b5c,#c0463d);overflow:hidden}
+.sw.custom input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border:0;padding:0}
+.swname{font-family:var(--f-body);text-transform:none;letter-spacing:0;font-style:italic;opacity:.8;margin-left:6px}
+.spine.preview{--h:150px;--w:36px;cursor:default;pointer-events:none}
+.spine.preview .t{max-height:96px}
+.src{font-family:var(--f-mono);font-size:9px;letter-spacing:.08em;opacity:.6;display:block;margin-top:2px}
+.gr-steps{margin:0 0 14px;padding-left:20px;font-size:16.5px;line-height:30px}
 @media (max-width:720px){
   .page{padding-block:28px 56px}
   .masthead{grid-template-columns:1fr}
@@ -370,7 +396,8 @@ footer{margin-top:60px;text-align:center;font-size:14px;color:var(--muted);font-
   </div>
 
   <div class="curate-bar" id="curateBar" hidden>
-    <p>Curating. Add books from any shelf plank, rename shelves, or keep a backup.</p>
+    <p id="curateMsg">Curating. Drag books to reorder them or move them to another shelf. Add books from any shelf plank.</p>
+    <button class="btn" id="goodreadsBtn">Import from Goodreads</button>
     <button class="btn" id="exportBtn">Export backup</button>
     <label class="btn" for="importFile" style="cursor:pointer">Import backup</label>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
@@ -390,7 +417,7 @@ footer{margin-top:60px;text-align:center;font-size:14px;color:var(--muted);font-
 
 <script>
 (() => {
-const KEY = 'vlib.v1', ROOMKEY = 'vlib.room', COVERKEY = 'vlib.covers';
+const KEY = 'vlib.v1', ROOMKEY = 'vlib.room', COVERKEY = 'vlib.covers', COLORKEY = 'vlib.colors';
 const store = {
   get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
   set(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
@@ -401,12 +428,12 @@ const SAMPLE = {
   sample: true,
   owner: "Rushi's Library",
   shelves: [
+    {id:'now', name:'Currently Reading', code:'NOW', kind:'reading'},
     {id:'brand', name:'Brand & Marketing', code:'MKT'},
     {id:'cosmos', name:'The Cosmos', code:'AST'},
     {id:'fiction', name:'Fiction', code:'FIC'},
     {id:'ideas', name:'Ideas & Essays', code:'IDE'},
-    {id:'now', name:'On the Nightstand', code:'NOW'},
-    {id:'next', name:'Want to Read', code:'TBR'}
+    {id:'next', name:'Want to Read', code:'TBR', kind:'want'}
   ],
   books: [
     ['This Is Marketing','Seth Godin',2018,288,'brand',5,'2025-02',1],
@@ -450,11 +477,36 @@ try { expanded = new Set(JSON.parse(store.get('vlib.expanded') || '[]')); } catc
 const saveExpanded = () => store.set('vlib.expanded', JSON.stringify([...expanded]));
 let coverCache = {};
 try { coverCache = JSON.parse(store.get(COVERKEY) || '{}'); } catch(e){}
+let colorCache = {};
+try { colorCache = JSON.parse(store.get(COLORKEY) || '{}'); } catch(e){}
 
 function load(){
-  try { const d = JSON.parse(store.get(KEY)); if (d && d.shelves && d.books) return d; } catch(e){}
+  try { const d = JSON.parse(store.get(KEY)); if (d && d.shelves && d.books) return normalise(d); } catch(e){}
   return JSON.parse(JSON.stringify(SAMPLE));
 }
+function normalise(d){
+  d.shelves.forEach(s => { if (!s.kind && s.id === 'now') s.kind = 'reading'; if (!s.kind && s.id === 'next') s.kind = 'want'; });
+  return d;
+}
+const isSpecial = s => s && (s.kind === 'reading' || s.kind === 'want');
+function readingShelf(){
+  let s = data.shelves.find(x => x.kind === 'reading');
+  if (!s) { s = {id:uid(), name:'Currently Reading', code:'NOW', kind:'reading'}; data.shelves.unshift(s); }
+  return s;
+}
+function wantShelf(){
+  let s = data.shelves.find(x => x.kind === 'want');
+  if (!s) { s = {id:uid(), name:'Want to Read', code:'TBR', kind:'want'}; data.shelves.push(s); }
+  return s;
+}
+function homeShelf(b){
+  const h = shelfOf(b.home);
+  if (h && !isSpecial(h)) return h;
+  let s = data.shelves.find(x => !isSpecial(x));
+  if (!s) { s = {id:uid(), name:'Read', code:'RED'}; data.shelves.splice(1, 0, s); }
+  return s;
+}
+const thisMonth = () => new Date().toISOString().slice(0,7);
 function save(){ data.sample = false; store.set(KEY, JSON.stringify(data)); }
 
 /* ---------- helpers ---------- */
@@ -464,7 +516,7 @@ const CLOTH = ['#7b2d26','#2f4858','#3c5a3a','#8a6a2f','#4b3b5c','#a0522d','#1f3
 function lum(hex){ const n = parseInt(hex.slice(1),16); const r=(n>>16)/255,g=((n>>8)&255)/255,b=(n&255)/255; return .2126*r+.7152*g+.0722*b; }
 function look(b){
   const h = hash(b.title + b.author);
-  const c = b.color || CLOTH[h % CLOTH.length];
+  const c = b.color || autoColor(b) || CLOTH[h % CLOTH.length];
   return { c, t: lum(c) > .55 ? '#2a2018' : '#f4ead7', h };
 }
 const shelfOf = id => data.shelves.find(s => s.id === id);
@@ -481,6 +533,8 @@ function words(n){ return ['no','one','two','three','four','five','six','seven',
 
 /* ---------- covers (real ones via Open Library when reachable) ---------- */
 function coverKey(b){ return (b.title + '|' + b.author).toLowerCase(); }
+const coverUrl = b => b.cover || coverCache[coverKey(b)] || '';
+function autoColor(b){ const u = coverUrl(b); return u ? colorCache[u] : null; }
 function coverHTML(b){
   const {c,t} = look(b);
   const url = b.cover || coverCache[coverKey(b)] || '';
@@ -496,15 +550,83 @@ async function findCover(b){
   if (b.cover || k in coverCache || pending.has(k)) return;
   pending.add(k);
   try {
-    const r = await fetch(`https://openlibrary.org/search.json?title=${encodeURIComponent(b.title)}&author=${encodeURIComponent(b.author)}&limit=1&fields=cover_i`);
-    const j = await r.json();
-    const id = j.docs?.[0]?.cover_i;
-    coverCache[k] = id ? `https://covers.openlibrary.org/b/id/${id}-L.jpg` : '';
+    let url = '';
+    const ol = async qs => { const r = await fetch(`https://openlibrary.org/search.json?${qs}&limit=1&fields=cover_i`); const j = await r.json(); const id = j.docs?.[0]?.cover_i; return id ? `https://covers.openlibrary.org/b/id/${id}-L.jpg` : ''; };
+    if (b.isbn) url = await ol(`isbn=${encodeURIComponent(b.isbn)}`).catch(() => '');
+    if (!url) url = await ol(`title=${encodeURIComponent(b.title)}&author=${encodeURIComponent(b.author)}`).catch(() => '');
+    if (!url) {
+      const q = b.isbn ? `isbn:${b.isbn}` : `intitle:${b.title}${b.author ? ' inauthor:' + b.author.split('&')[0].trim() : ''}`;
+      const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=1`);
+      const j = await r.json();
+      url = gbImage(j.items?.[0]?.volumeInfo);
+    }
+    coverCache[k] = url;
     store.set(COVERKEY, JSON.stringify(coverCache));
-    if (id) document.querySelectorAll(`[data-cover="${b.id}"]`).forEach(el => {
-      if (!el.querySelector('img')) el.insertAdjacentHTML('beforeend', `<img src="${coverCache[k]}" alt="" onerror="this.remove()">`);
+    if (url) document.querySelectorAll(`[data-cover="${b.id}"]`).forEach(el => {
+      if (!el.querySelector('img')) el.insertAdjacentHTML('beforeend', `<img src="${esc(url)}" alt="" onerror="this.remove()">`);
     });
   } catch(e) { /* offline or blocked: the typographic cover stays */ }
+  pending.delete(k);
+}
+function gbImage(v){
+  const u = v?.imageLinks?.thumbnail || v?.imageLinks?.smallThumbnail || '';
+  return u.replace(/^http:/, 'https:').replace('&edge=curl', '');
+}
+
+/* ---------- spine colour from the cover ---------- */
+function extractColor(url){
+  const tryLoad = src => new Promise(res => {
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas'), w = c.width = 36, h = c.height = 54;
+        const x = c.getContext('2d', {willReadFrequently:true}); x.drawImage(img, 0, 0, w, h);
+        const d = x.getImageData(0, 0, w, h).data, buckets = {};
+        for (let i = 0; i < d.length; i += 4) {
+          const r = d[i], g = d[i+1], bl = d[i+2]; if (d[i+3] < 200) continue;
+          const mx = Math.max(r,g,bl), mn = Math.min(r,g,bl), sat = mx ? (mx-mn)/mx : 0, v = mx/255;
+          if (v > .94 && sat < .08) continue;          // paper-white margins
+          const wgt = 1 + sat * 3 * (v > .15 ? 1 : .2);
+          const key = (r>>5)*64 + (g>>5)*8 + (bl>>5), o = buckets[key] || (buckets[key] = {w:0,r:0,g:0,b:0});
+          o.w += wgt; o.r += r*wgt; o.g += g*wgt; o.b += bl*wgt;
+        }
+        const best = Object.values(buckets).sort((a,b) => b.w - a.w)[0];
+        if (!best) return res(null);
+        const hx = n => Math.round(n / best.w).toString(16).padStart(2, '0');
+        res('#' + hx(best.r) + hx(best.g) + hx(best.b));
+      } catch(e) { res(null); }    // image not readable (no CORS)
+    };
+    img.onerror = () => res(null);
+    img.src = src;
+  });
+  return tryLoad(url).then(c => c || tryLoad(`https://images.weserv.nl/?url=${encodeURIComponent(url.replace(/^https?:\/\//, ''))}&w=72`));
+}
+async function colorFor(url){
+  if (!url) return null;
+  if (url in colorCache) return colorCache[url];
+  const c = await extractColor(url);
+  colorCache[url] = c; store.set(COLORKEY, JSON.stringify(colorCache));
+  return c;
+}
+function paintBook(b){
+  const {c, t} = look(b);
+  document.querySelectorAll(`[data-id="${b.id}"], [data-cover="${b.id}"]`).forEach(el => { el.style.setProperty('--c', c); el.style.setProperty('--t', t); });
+}
+/* fill in covers and colours in the background, a few at a time */
+const colourQueue = []; let colourBusy = 0, queued = new Set();
+function ensureColours(){
+  data.books.forEach(b => { if (!b.color && !queued.has(b.id) && !(coverUrl(b) && coverUrl(b) in colorCache) && !(coverKey(b) in coverCache && !coverUrl(b))) { queued.add(b.id); colourQueue.push(b.id); } });
+  pump();
+}
+function pump(){
+  while (colourBusy < 3 && colourQueue.length) {
+    const b = data.books.find(x => x.id === colourQueue.shift()); if (!b) continue;
+    colourBusy++;
+    (async () => {
+      if (!coverUrl(b)) await findCover(b);
+      if (coverUrl(b)) { await colorFor(coverUrl(b)); paintBook(b); }
+    })().finally(() => { colourBusy--; pump(); });
+  }
 }
 
 /* ---------- render ---------- */
@@ -528,21 +650,23 @@ function spineHTML(b, i, arr){
   return `<button class="spine ${style}${lean}" data-id="${b.id}" style="--c:${c};--t:${t};--h:${H}px;--w:${W}px;--fs:${fs}px" aria-label="${esc(b.title)} by ${esc(b.author)}">
     <span class="t">${esc(b.title)}</span><span class="a">${esc(last)}</span></button>`;
 }
-function faceHTML(b){
-  return `<button class="faceout" data-id="${b.id}" aria-label="${esc(b.title)} by ${esc(b.author)}">${coverHTML(b)}</button>`;
+function faceHTML(b, reading){
+  return `<button class="faceout${reading ? ' reading' : ''}" data-id="${b.id}" aria-label="${esc(b.title)} by ${esc(b.author)}${reading ? ', currently reading' : ''}">${coverHTML(b)}</button>`;
 }
 
 function render(){
   const root = document.documentElement;
   const caseEl = document.getElementById('case');
-  const read = data.books.filter(b => b.shelf !== 'next');
+  const read = data.books.filter(b => !isSpecial(shelfOf(b.shelf)));
+  const now = data.books.filter(b => shelfOf(b.shelf)?.kind === 'reading');
   const pages = read.reduce((s,b) => s + (+b.pages||0), 0);
   const rated = read.filter(b => b.rating > 0);
-  const avg = rated.length ? (rated.reduce((s,b)=>s+b.rating,0)/rated.length).toFixed(1) : '—';
+  const avg = rated.length ? (rated.reduce((s,b)=>s+b.rating,0)/rated.length).toFixed(1) : '';
   document.getElementById('owner').textContent = data.owner || 'My Library';
   document.title = data.owner || 'My Library';
   document.getElementById('tally').innerHTML =
-    `<b>${read.length}</b> volumes, <b>${pages.toLocaleString()}</b> pages, across ${words(data.shelves.length)} shelves. Average rating <b>${avg}</b>.`;
+    `<b>${read.length}</b> volumes, <b>${pages.toLocaleString()}</b> pages, across ${words(data.shelves.filter(s => !isSpecial(s)).length)} shelves.${avg ? ` Average rating <b>${avg}</b>.` : ''}${now.length ? ` Currently reading <i>${esc(now[0].title)}</i>${now.length > 1 ? ` and ${words(now.length - 1)} more` : ''}.` : ''}`;
+  document.body.classList.toggle('curating', curating);
   document.getElementById('sampleNotice').hidden = !data.sample;
 
   document.getElementById('chips').innerHTML = data.shelves.map(s =>
@@ -550,17 +674,10 @@ function render(){
 
   caseEl.innerHTML = '<div class="grain"></div>' + data.shelves.map((s, si) => {
     const books = data.books.filter(b => b.shelf === s.id);
-    const faces = books.filter(b => b.fav);
-    const spines = books.filter(b => !b.fav);
+    const reading = s.kind === 'reading';
     let inner = '';
-    if (!books.length) inner = `<p class="empty-shelf">An empty shelf, waiting.${curating ? '' : ''}</p>`;
-    else {
-      const half = Math.ceil(spines.length * 0.55);
-      inner = spines.slice(0, half).map(spineHTML).join('')
-        + faces.map(faceHTML).join('')
-        + spines.slice(half).map((b,i,a) => spineHTML(b,i,a)).join('')
-        + DECOR[si % DECOR.length]();
-    }
+    if (!books.length) inner = `<p class="empty-shelf">${reading ? 'Nothing on the go. Open any book and mark it as currently reading.' : curating ? 'An empty shelf. Drag books here.' : 'An empty shelf, waiting.'}</p>`;
+    else inner = books.map((b, i, arr) => (b.fav || reading) ? faceHTML(b, reading) : spineHTML(b, i, arr)).join('') + DECOR[si % DECOR.length]();
     const tools = curating ? `<div class="ledge-tools">
         <button data-act="add" data-shelf="${s.id}">+ Book</button>
         <button data-act="rename" data-shelf="${s.id}">Rename</button>
@@ -584,7 +701,8 @@ function render(){
   ob.contentEditable = curating ? 'true' : 'false';
   document.getElementById('foot').textContent = `Catalogued by hand. ${data.books.filter(b=>b.shelf==='next').length ? '' : ''}Last arranged ${new Date().toLocaleDateString(undefined,{month:'long',year:'numeric'})}.`;
 
-  data.books.filter(b => b.fav).forEach(findCover);
+  data.books.filter(b => b.fav || shelfOf(b.shelf)?.kind === 'reading').forEach(findCover);
+  ensureColours();
   document.querySelectorAll('.shelf .row').forEach(row => {
     row.addEventListener('scroll', () => updateOverflow(row.closest('.shelf')), {passive:true});
     ro.observe(row);
@@ -657,13 +775,16 @@ function showBook(id){
           ${b.year ? `<dt>Published</dt><dd>${esc(b.year)}</dd>` : ''}
           ${b.pages ? `<dt>Pages</dt><dd>${esc(b.pages)}</dd>` : ''}
           <dt>Shelf</dt><dd>${esc(s?.name || '')}</dd>
-          ${b.finished ? `<dt>Finished</dt><dd>${esc(fmtMonth(b.finished))}</dd>` : ''}
+          ${b.finished && s?.kind !== 'reading' ? `<dt>Finished</dt><dd>${esc(fmtMonth(b.finished))}</dd>` : ''}
           ${b.rating ? `<dt>Rating</dt><dd>${stars(b.rating)}</dd>` : ''}
         </dl>
         <p class="notes ${b.notes ? '' : 'none'}">${b.notes ? esc(b.notes) : 'No notes on this one yet.'}</p>
         <div class="card-actions">
           <button class="btn" data-act="edit" data-id="${b.id}">Edit</button>
-          <button class="btn" data-act="fav" data-id="${b.id}">${b.fav ? 'Turn spine out' : 'Display cover out'}</button>
+          ${s?.kind === 'reading'
+            ? `<button class="btn primary" data-act="finished" data-id="${b.id}">Mark as finished</button>`
+            : `<button class="btn primary" data-act="reading" data-id="${b.id}">${s?.kind === 'want' ? 'Start reading' : 'Mark as currently reading'}</button>`}
+          ${s?.kind === 'reading' ? '' : `<button class="btn" data-act="fav" data-id="${b.id}">${b.fav ? 'Turn spine out' : 'Display cover out'}</button>`}
           <button class="btn danger" data-act="delbook" data-id="${b.id}">Remove</button>
         </div>
       </div>
@@ -680,7 +801,7 @@ function showForm(b, shelfId){
       <div class="field wide">
         <label for="f-lookup">Look it up</label>
         <div class="lookup"><input id="f-lookup" placeholder="Type a title, then search" value=""><button type="button" class="btn" id="lookupBtn">Search</button></div>
-        <p class="hint" id="lookupHint">Fills in author, year, pages and cover from Open Library.</p>
+        <p class="hint" id="lookupHint">Searches Google Books and Open Library, then fills in the author, year, pages and cover.</p>
       </div>
       <div class="results" id="results"></div>
       <div class="field wide"><label for="f-title">Title</label><input id="f-title" value="${esc(b.title)}" autofocus required></div>
@@ -690,7 +811,17 @@ function showForm(b, shelfId){
       <div class="field"><label for="f-shelf">Shelf</label><select id="f-shelf">${data.shelves.map(s => `<option value="${s.id}" ${s.id===b.shelf?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
       <div class="field"><label for="f-rating">Rating</label><select id="f-rating">${[0,1,2,3,4,5].map(n => `<option value="${n}" ${n==b.rating?'selected':''}>${n ? '★'.repeat(n) : 'Unrated'}</option>`).join('')}</select></div>
       <div class="field"><label for="f-finished">Finished</label><input id="f-finished" type="month" value="${esc(b.finished)}"></div>
-      <div class="field"><label for="f-color">Spine colour</label><input id="f-color" type="color" value="${esc(look(b.title ? b : {title:'x',author:'y'}).c)}"></div>
+      <div class="field"></div>
+      <div class="field wide"><label>Spine colour <span class="swname" id="swName"></span></label>
+        <div class="colorpick">
+          <div class="swatches" role="radiogroup" aria-label="Spine colour" id="swatches">
+            <button type="button" class="sw auto" role="radio" data-sw="auto"><i></i>Match cover</button>
+            ${CLOTH.map(c => `<button type="button" class="sw" role="radio" data-sw="${c}" style="--sw:${c};--ck:${lum(c) > .55 ? '#2a2018' : '#fff'}" aria-label="Colour ${c}"></button>`).join('')}
+            <label class="sw custom" title="Pick any colour" aria-label="Pick any colour"><input type="color" id="f-color"></label>
+          </div>
+          <div class="spine s-bands preview" id="spPreview" aria-hidden="true"><span class="t"></span><span class="a"></span></div>
+        </div>
+      </div>
       <div class="field wide"><label for="f-cover">Cover image link (optional)</label><input id="f-cover" value="${esc(b.cover)}" placeholder="https://"></div>
       <div class="field wide"><label for="f-notes">Notes, a favourite line, what it changed</label><textarea id="f-notes">${esc(b.notes)}</textarea></div>
       <div class="field wide check"><input type="checkbox" id="f-fav" ${b.fav?'checked':''}><label for="f-fav" style="text-transform:none;letter-spacing:0;font-family:var(--f-body);font-size:16px;opacity:1">Display with the cover facing out</label></div>
@@ -698,8 +829,31 @@ function showForm(b, shelfId){
       <div class="card-actions" style="grid-column:1/-1"><button class="btn primary" type="submit">${isNew ? 'Shelve it' : 'Save changes'}</button><button class="btn close-btn" type="button">Cancel</button></div>
     </form>`);
   const f = document.getElementById('bookForm');
-  const colorTouched = { v: !!b.color };
-  f.querySelector('#f-color').addEventListener('input', () => colorTouched.v = true);
+  // spine colour: 'auto' follows the cover, otherwise a hex the reader picked
+  let mode = b.color || 'auto', autoHex = null;
+  const val = id => f.querySelector(id).value.trim();
+  const fallback = () => CLOTH[hash((val('#f-title') || 'x') + val('#f-author')) % CLOTH.length];
+  const current = () => mode === 'auto' ? (autoHex || fallback()) : mode;
+  const paint = () => {
+    const c = current(), t = lum(c) > .55 ? '#2a2018' : '#f4ead7';
+    f.querySelectorAll('[data-sw]').forEach(sw => sw.setAttribute('aria-checked', sw.dataset.sw === mode || (mode !== 'auto' && sw.dataset.sw === 'auto' && false)));
+    const custom = f.querySelector('.sw.custom'), isCustom = mode !== 'auto' && !CLOTH.includes(mode);
+    custom.setAttribute('aria-checked', isCustom); custom.style.background = isCustom ? mode : ''; custom.style.setProperty('--ck', lum(c) > .55 ? '#2a2018' : '#fff');
+    f.querySelector('.sw.auto').style.setProperty('--sw', autoHex || fallback());
+    f.querySelector('#swName').textContent = mode === 'auto' ? (autoHex ? 'matched to the cover' : val('#f-cover') ? 'reading the cover…' : 'add a cover to match it') : 'your pick';
+    const pv = f.querySelector('#spPreview'); pv.style.setProperty('--c', c); pv.style.setProperty('--t', t);
+    pv.querySelector('.t').textContent = val('#f-title') || 'Title';
+    pv.querySelector('.a').textContent = (val('#f-author') || 'Author').split('&')[0].trim().split(' ').pop();
+  };
+  let seq = 0;
+  const refreshAuto = async () => { const my = ++seq; autoHex = null; paint(); const c = await colorFor(val('#f-cover')); if (my === seq) { autoHex = c; paint(); } };
+  f.querySelector('#swatches').addEventListener('click', e => { const sw = e.target.closest('[data-sw]'); if (sw) { mode = sw.dataset.sw; paint(); } });
+  f.querySelector('#f-color').value = mode !== 'auto' ? mode : fallback();
+  f.querySelector('#f-color').addEventListener('input', e => { mode = e.target.value; paint(); });
+  ['#f-title', '#f-author'].forEach(id => f.querySelector(id).addEventListener('input', paint));
+  f.querySelector('#f-cover').addEventListener('change', refreshAuto);
+  f.addEventListener('coverpicked', refreshAuto);
+  refreshAuto();
   f.querySelector('.close-btn').onclick = closeModal;
   const doLookup = () => lookup(f.querySelector('#f-lookup').value || f.querySelector('#f-title').value);
   f.querySelector('#lookupBtn').onclick = doLookup;
@@ -714,7 +868,8 @@ function showForm(b, shelfId){
       pages:+v('#f-pages') || '', shelf:v('#f-shelf'), rating:+v('#f-rating'), finished:v('#f-finished'),
       cover:v('#f-cover'), notes:f.querySelector('#f-notes').value, fav:f.querySelector('#f-fav').checked
     });
-    if (colorTouched.v) rec.color = v('#f-color');
+    if (mode === 'auto') delete rec.color; else rec.color = mode;
+    if (f.dataset.isbn) rec.isbn = f.dataset.isbn;
     if (isNew) data.books.push(rec);
     save(); closeModal(); render();
     setTimeout(() => { const el = document.querySelector(`[data-id="${rec.id}"]`); el?.scrollIntoView({block:'center',inline:'center',behavior:'smooth'}); el?.classList.add('hit'); setTimeout(()=>el?.classList.remove('hit'),1400); }, 260);
@@ -724,27 +879,43 @@ function showForm(b, shelfId){
 async function lookup(q){
   const hint = document.getElementById('lookupHint'), res = document.getElementById('results');
   if (!q.trim()) { hint.textContent = 'Type a title to search for.'; return; }
-  hint.textContent = 'Searching Open Library…';
-  try {
-    const r = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8&fields=title,author_name,first_publish_year,number_of_pages_median,cover_i`);
-    const j = await r.json();
-    if (!j.docs?.length) { hint.textContent = 'No matches. Fill the fields in by hand.'; res.innerHTML=''; return; }
-    hint.textContent = 'Pick the right edition to fill the form.';
-    res.innerHTML = j.docs.map((d,i) => `<button type="button" data-i="${i}">${d.cover_i ? `<img src="https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg" alt="">` : '<img alt="">'}${esc(d.title)}</button>`).join('');
-    res.querySelectorAll('button').forEach(btn => btn.onclick = () => {
-      const d = j.docs[+btn.dataset.i], set = (id,val) => { if (val) document.getElementById(id).value = val; };
-      set('f-title', d.title); set('f-author', (d.author_name||[]).join(' & '));
-      set('f-year', d.first_publish_year); set('f-pages', d.number_of_pages_median);
-      if (d.cover_i) set('f-cover', `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg`);
-      res.querySelectorAll('button').forEach(x => x.style.outline = ''); btn.style.outline = '2px solid currentColor';
-    });
-  } catch(e) {
-    hint.textContent = 'Search could not reach Open Library from here. It works when the page is opened from your own computer or website; for now, fill the fields in by hand.';
+  hint.textContent = 'Searching Google Books and Open Library…';
+  const gb = fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=10&printType=books`).then(r => r.json()).then(j => (j.items || []).map(it => {
+    const v = it.volumeInfo || {}, ids = v.industryIdentifiers || [];
+    return { src:'Google', title: v.title + (v.subtitle && v.title.length < 30 ? '' : ''), author:(v.authors || []).join(' & '), year:(v.publishedDate || '').slice(0,4), pages:v.pageCount || '',
+      cover: gbImage(v), isbn:(ids.find(x => x.type === 'ISBN_13') || ids.find(x => x.type === 'ISBN_10') || {}).identifier || '' };
+  })).catch(() => null);
+  const ol = fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8&fields=title,author_name,first_publish_year,number_of_pages_median,cover_i,isbn`).then(r => r.json()).then(j => (j.docs || []).map(d => ({
+    src:'Open Library', title:d.title, author:(d.author_name || []).join(' & '), year:d.first_publish_year || '', pages:d.number_of_pages_median || '',
+    cover: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg` : '', isbn:(d.isbn || [])[0] || '' }))).catch(() => null);
+  const [a, b] = await Promise.all([gb, ol]);
+  if (!a && !b) { hint.textContent = 'Search could not reach the book databases from here. It works on your published site or from your own computer; for now, fill the fields in by hand.'; return; }
+  // interleave the two sources and drop duplicates
+  const seen = new Set(), list = [];
+  for (let i = 0; i < 10; i++) for (const d of [a?.[i], b?.[i]]) {
+    if (!d || !d.title) continue; const k = (d.title + '|' + d.author.split('&')[0]).toLowerCase().replace(/[^a-z0-9|]/g, '');
+    if (seen.has(k)) { const prev = list.find(x => x.key === k); if (prev && !prev.cover && d.cover) prev.cover = d.cover; if (prev && !prev.pages && d.pages) prev.pages = d.pages; continue; }
+    seen.add(k); list.push({...d, key:k});
   }
+  if (!list.length) { hint.textContent = 'No matches in either database. Fill the fields in by hand.'; res.innerHTML = ''; return; }
+  hint.textContent = 'Pick the right book to fill the form.';
+  res.innerHTML = list.slice(0, 14).map((d,i) => `<button type="button" data-i="${i}">${d.cover ? `<img src="${esc(d.cover)}" alt="">` : '<img alt="">'}${esc(d.title)}<span class="src">${esc(d.author.split('&')[0])}${d.year ? ' · ' + d.year : ''}</span></button>`).join('');
+  res.querySelectorAll('button').forEach(btn => btn.onclick = () => {
+    const d = list[+btn.dataset.i], set = (id,val) => { if (val) document.getElementById(id).value = val; };
+    set('f-title', d.title); set('f-author', d.author); set('f-year', d.year); set('f-pages', d.pages);
+    const form = document.getElementById('bookForm');
+    document.getElementById('f-cover').value = d.cover || '';
+    if (d.isbn) form.dataset.isbn = d.isbn;
+    form.dispatchEvent(new Event('coverpicked'));
+    document.getElementById('f-title').dispatchEvent(new Event('input'));
+    res.querySelectorAll('button').forEach(x => x.style.outline = ''); btn.style.outline = '2px solid currentColor';
+  });
 }
 
 /* ---------- events ---------- */
+let suppressClick = false;
 document.addEventListener('click', e => {
+  if (suppressClick) { suppressClick = false; e.preventDefault(); return; }
   const t = e.target.closest('button, .chip'); if (!t) return;
   if (t.matches('.close')) return closeModal();
   if (t.dataset.jump) return document.getElementById('shelf-' + t.dataset.jump)?.scrollIntoView({behavior:'smooth', block:'start'});
@@ -764,6 +935,16 @@ document.addEventListener('click', e => {
   const sid = t.dataset.shelf, bid = t.dataset.id;
   if (act === 'add') showForm(null, sid);
   if (act === 'edit') showForm(data.books.find(b => b.id === bid));
+  if (act === 'reading') {
+    const b = data.books.find(x => x.id === bid), from = shelfOf(b.shelf);
+    if (!isSpecial(from)) b.home = b.shelf;
+    b.shelf = readingShelf().id; save(); render(); showBook(bid); toast(`Now reading ${b.title}`);
+  }
+  if (act === 'finished') {
+    const b = data.books.find(x => x.id === bid), to = homeShelf(b);
+    b.shelf = to.id; delete b.home; if (!b.finished) b.finished = thisMonth();
+    save(); render(); showBook(bid); toast(`Finished. Back on ${to.name}`);
+  }
   if (act === 'fav') { const b = data.books.find(x => x.id === bid); b.fav = !b.fav; save(); render(); showBook(bid); }
   if (act === 'delbook') {
     if (t.dataset.armed) { data.books = data.books.filter(b => b.id !== bid); save(); closeModal(); render(); }
@@ -787,6 +968,155 @@ document.addEventListener('click', e => {
 });
 
 document.getElementById('q').addEventListener('input', applySearch);
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg){
+  let el = document.querySelector('.toast'); if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+  el.textContent = msg; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+/* ---------- drag and drop (while curating) ---------- */
+let drag = null;
+document.addEventListener('pointerdown', e => {
+  if (!curating || e.button !== 0) return;
+  const el = e.target.closest('.case .spine, .case .faceout'); if (!el) return;
+  drag = {el, id:el.dataset.id, x0:e.clientX, y0:e.clientY, x:e.clientX, y:e.clientY, started:false, from:el.closest('.shelf').id.slice(6)};
+});
+document.addEventListener('pointermove', e => {
+  if (!drag) return;
+  drag.x = e.clientX; drag.y = e.clientY;
+  if (!drag.started) { if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 6) return; startDrag(); }
+  e.preventDefault(); moveDrag();
+}, {passive:false});
+document.addEventListener('pointerup', () => { if (!drag) return; const d = drag; drag = null; if (d.started) { suppressClick = true; setTimeout(() => suppressClick = false, 60); endDrag(d); } });
+document.addEventListener('pointercancel', () => { if (drag?.started) endDrag(drag, true); drag = null; });
+function startDrag(){
+  const d = drag, r = d.el.getBoundingClientRect();
+  d.offX = d.x0 - r.left; d.offY = d.y0 - r.top;
+  d.ghost = d.el.cloneNode(true); d.ghost.classList.add('ghost'); d.ghost.classList.remove('hit','dim');
+  d.ghost.style.width = r.width + 'px'; d.ghost.style.height = r.height + 'px';
+  document.body.appendChild(d.ghost);
+  d.el.classList.add('placeholder'); document.body.classList.add('dragging');
+  d.started = true; d.raf = requestAnimationFrame(autoScroll);
+}
+function moveDrag(){
+  const d = drag;
+  d.ghost.style.transform = `translate(${d.x - d.offX}px, ${d.y - d.offY}px) rotate(-3deg) scale(1.04)`;
+  const hit = document.elementFromPoint(d.x, d.y);
+  const row = hit?.closest('.row') || hit?.closest('.shelf')?.querySelector('.row');
+  if (!row) return;
+  d.row = row;
+  row.querySelector('.empty-shelf')?.remove();
+  const items = [...row.querySelectorAll('.spine, .faceout')].filter(n => n !== d.el);
+  const before = items.find(n => {
+    const r = n.getBoundingClientRect();
+    const sameLine = d.y <= r.bottom + 32 && d.y >= r.bottom - 290;
+    return sameLine ? d.x < r.left + r.width / 2 : r.top > d.y;
+  });
+  const anchor = before || row.querySelector('.decor');
+  if (anchor) { if (d.el.nextElementSibling !== anchor) row.insertBefore(d.el, anchor); }
+  else if (row.lastElementChild !== d.el) row.appendChild(d.el);
+}
+function autoScroll(){
+  const d = drag; if (!d || !d.started) return;
+  if (d.row && !d.row.classList.contains('all')) {
+    const r = d.row.getBoundingClientRect();
+    if (d.x < r.left + 70) d.row.scrollLeft -= 14; else if (d.x > r.right - 70) d.row.scrollLeft += 14;
+  }
+  if (d.y < 80) scrollBy(0, -16); else if (d.y > innerHeight - 80) scrollBy(0, 16);
+  d.raf = requestAnimationFrame(autoScroll);
+}
+function endDrag(d, cancel){
+  cancelAnimationFrame(d.raf); d.ghost?.remove(); d.el.classList.remove('placeholder'); document.body.classList.remove('dragging');
+  if (cancel || !d.row) return render();
+  const to = d.row.closest('.shelf').id.slice(6), b = data.books.find(x => x.id === d.id);
+  const ids = [...d.row.querySelectorAll('.spine, .faceout')].map(n => n.dataset.id);
+  const fromS = shelfOf(b.shelf), toS = shelfOf(to);
+  if (to !== b.shelf) {
+    if (toS.kind === 'reading' && !isSpecial(fromS)) b.home = b.shelf;
+    if (fromS?.kind === 'reading' && !isSpecial(toS)) { delete b.home; if (!b.finished) b.finished = thisMonth(); }
+    b.shelf = to;
+  }
+  const byId = Object.fromEntries(data.books.map(x => [x.id, x])), set = new Set(ids);
+  data.books = data.books.filter(x => !set.has(x.id)).concat(ids.map(id => byId[id]).filter(Boolean));
+  save(); render();
+  if (to !== d.from) toast(`Moved to ${toS.name}`);
+}
+
+/* ---------- Goodreads import ---------- */
+function parseCSV(text){
+  const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i+1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(f); f = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i+1] === '\n') i++; row.push(f); rows.push(row); row = []; f = ''; }
+    else f += c;
+  }
+  if (f || row.length) { row.push(f); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim()));
+}
+const titleCase = s => s.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+function importGoodreads(text){
+  const rows = parseCSV(text); if (rows.length < 2) throw new Error('empty');
+  const head = rows[0].map(h => h.trim()), col = n => head.indexOf(n);
+  if (col('Title') < 0 || col('Exclusive Shelf') < 0) throw new Error('not goodreads');
+  const get = (r, n) => (col(n) >= 0 ? (r[col(n)] || '') : '').trim();
+  if (data.sample) { data.shelves = []; data.books = []; data.sample = false; }
+  const have = new Set(data.books.map(b => (b.title + '|' + b.author).toLowerCase()));
+  const byName = {}; data.shelves.forEach(s => byName[s.name.toLowerCase()] = s);
+  const shelfNamed = name => { const k = name.toLowerCase(); if (!byName[k]) { byName[k] = {id:uid(), name, code:name.replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase()}; data.shelves.push(byName[k]); } return byName[k]; };
+  let added = 0, skipped = 0;
+  for (const r of rows.slice(1)) {
+    const title = get(r, 'Title').replace(/\s*\([^)]*#\d+(\.\d+)?\)\s*$/, '');
+    const author = get(r, 'Author'); if (!title) continue;
+    if (have.has((title + '|' + author).toLowerCase())) { skipped++; continue; }
+    const ex = get(r, 'Exclusive Shelf');
+    const custom = get(r, 'Bookshelves').split(',').map(x => x.trim()).filter(x => x && !['read','to-read','currently-reading'].includes(x));
+    const fav = custom.some(x => /^favou?rites?$/i.test(x));
+    const genre = custom.find(x => !/^favou?rites?$/i.test(x));
+    let shelf;
+    if (ex === 'currently-reading') shelf = readingShelf();
+    else if (ex === 'to-read') shelf = wantShelf();
+    else shelf = shelfNamed(genre ? titleCase(genre) : 'Read');
+    const dr = get(r, 'Date Read').replace(/\//g, '-').slice(0, 7);
+    const isbn = (get(r, 'ISBN13') || get(r, 'ISBN')).replace(/[^0-9Xx]/g, '');
+    data.books.push({ id:uid(), title, author, year: +(get(r, 'Original Publication Year') || get(r, 'Year Published')) || '', pages: +get(r, 'Number of Pages') || '',
+      shelf: shelf.id, rating: +get(r, 'My Rating') || 0, finished: dr, notes: get(r, 'My Review').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ''),
+      fav, cover:'', isbn });
+    have.add((title + '|' + author).toLowerCase()); added++;
+  }
+  // keep the special shelves at the ends
+  data.shelves.sort((a, b) => (a.kind === 'reading' ? -1 : a.kind === 'want' ? 1 : 0) - (b.kind === 'reading' ? -1 : b.kind === 'want' ? 1 : 0));
+  save(); render();
+  return {added, skipped, shelves: data.shelves.filter(s => data.books.some(b => b.shelf === s.id)).length};
+}
+document.getElementById('goodreadsBtn').onclick = () => {
+  openModal(`
+    <div class="card-head"><div class="callno">IMPORT\nGOODREADS</div><button class="close" aria-label="Close">×</button></div>
+    <h2 id="cardTitle" style="margin-top:22px">Bring in your Goodreads library</h2>
+    <ol class="gr-steps">
+      <li>On Goodreads, open <b>My Books</b>.</li>
+      <li>In the left column under Tools, choose <b>Import and export</b>.</li>
+      <li>Click <b>Export Library</b>, wait for the link, and download the file.</li>
+      <li>Choose that file below.</li>
+    </ol>
+    <p class="notes" style="line-height:28px;font-size:16px">Read books go onto shelves named after your Goodreads shelves; anything on a <i>favorites</i> shelf faces out. Currently reading and want to read get their own shelves. Ratings, read dates and reviews come along too.${data.sample ? ' The sample books will be cleared first.' : ' Books you already have are skipped.'}</p>
+    <div class="card-actions"><label class="btn primary" for="grFile" style="cursor:pointer">Choose Goodreads file</label><input type="file" id="grFile" accept=".csv,text/csv" hidden></div>
+    <p class="err" id="grErr" hidden></p>`);
+  document.getElementById('grFile').onchange = e => {
+    const file = e.target.files[0]; if (!file) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try { const r = importGoodreads(rd.result); closeModal(); toast(`Imported ${r.added} books onto ${words(r.shelves)} shelves`);
+        document.getElementById('curateMsg').textContent = `Imported ${r.added} books${r.skipped ? `, skipped ${r.skipped} you already had` : ''}. Covers and spine colours fill in over the next minute or two.`; }
+      catch(err) { const el = document.getElementById('grErr'); el.hidden = false; el.textContent = 'That file does not look like a Goodreads export. It should be a .csv file named something like goodreads_library_export.csv.'; }
+    };
+    rd.readAsText(file);
+  };
+};
 function setCurate(on){
   curating = on;
   const b = document.getElementById('curateBtn');
@@ -796,7 +1126,8 @@ function setCurate(on){
 document.getElementById('curateBtn').onclick = () => setCurate(!curating);
 document.getElementById('startCurate').onclick = () => setCurate(true);
 document.getElementById('addShelf').onclick = () => {
-  const id = uid(); data.shelves.push({id, name:'New Shelf', code:'NEW'}); save(); render();
+  const id = uid(), wi = data.shelves.findIndex(s => s.kind === 'want');
+  data.shelves.splice(wi < 0 ? data.shelves.length : wi, 0, {id, name:'New Shelf', code:'NEW'}); save(); render();
   document.querySelector(`[data-act="rename"][data-shelf="${id}"]`)?.click();
   document.getElementById('shelf-' + id)?.scrollIntoView({behavior:'smooth', block:'center'});
 };
