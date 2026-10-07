@@ -403,6 +403,9 @@ body.visitor #curateBtn, body.visitor #sampleNotice{display:none!important}
 .suggestion .card-cover{width:130px;height:190px}
 .thanks{font-size:18px;line-height:32px;margin:18px 0 0}
 @media (max-width:720px){.suggestion{grid-template-columns:1fr}}
+.legal{display:flex;justify-content:center;gap:10px;margin-top:8px;font-size:14px;color:var(--muted);font-style:italic}
+.legal a{color:var(--muted);text-underline-offset:3px}
+.legal a:hover{color:var(--ink)}
 /* Curate: drag and drop */
 body.curating .spine, body.curating .faceout{cursor:grab;touch-action:none}
 body.dragging, body.dragging *{cursor:grabbing!important;user-select:none}
@@ -505,6 +508,7 @@ body.dragging, body.dragging *{cursor:grabbing!important;user-select:none}
   </div>
 
   <footer id="foot"></footer>
+  <nav class="legal" aria-label="Site information"><a href="privacy.html">Privacy</a><span aria-hidden="true">·</span><a href="terms.html">Terms</a></nav>
 </div>
 
 <div class="veil" id="veil" hidden>

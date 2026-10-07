@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Privacy Policy · Rushi's Library</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column on library-card paper, with a call-number style header and numbered clauses. */
+:root{
+  --bg:#f3ead6; --paper:#fbf6ea; --ink:#2a2018; --muted:#6b5d4c; --rule:#d9ccb2; --accent:#9b2c25; --link:#5a3a1a;
+  --f-display:"Young Serif","Iowan Old Style",Georgia,serif;
+  --f-body:"Newsreader","Iowan Old Style",Georgia,serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#10201a;--paper:#16271f;--ink:#efe7d4;--muted:#a8b6a5;--rule:#2f4a3e;--accent:#d8b46a;--link:#e3c98f;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#10201a;--paper:#16271f;--ink:#efe7d4;--muted:#a8b6a5;--rule:#2f4a3e;--accent:#d8b46a;--link:#e3c98f;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:18.5px;line-height:1.62}
+main{max-width:720px;margin:0 auto;padding-inline:20px;padding-block:48px 72px}
+.back{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-decoration:none}
+.back:hover{color:var(--ink)}
+.sheet{background:var(--paper);border:1px solid var(--rule);border-radius:3px;padding:34px 40px 40px;margin-top:18px;position:relative}
+.sheet::before{content:"";position:absolute;left:0;right:0;top:96px;height:2px;background:var(--accent);opacity:.6}
+.callno{font-family:var(--f-mono);font-size:12.5px;letter-spacing:.08em;color:var(--muted);margin:0;height:52px;white-space:pre}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(32px,6vw,44px);line-height:1.05;margin:26px 0 6px;text-wrap:balance}
+.dated{font-style:italic;color:var(--muted);margin:0 0 26px}
+h2{font-family:var(--f-display);font-weight:400;font-size:23px;margin:34px 0 6px;text-wrap:balance}
+h2 span{font-family:var(--f-mono);font-size:13px;color:var(--accent);margin-right:10px;vertical-align:3px}
+p,li{max-width:64ch}
+ul{padding-left:22px}
+li{margin:4px 0}
+a{color:var(--link);text-underline-offset:3px;text-decoration-thickness:1px}
+.summary{border-left:3px solid var(--accent);padding:4px 0 4px 18px;margin:10px 0 6px;font-style:italic}
+footer{margin-top:22px;font-size:15px;color:var(--muted);text-align:center;font-style:italic}
+footer a{color:var(--muted)}
+@media (max-width:600px){.sheet{padding:26px 20px 32px}.sheet::before{top:88px}}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="./">← Back to the library</a>
+<article class="sheet">
+<p class="callno">POL 001.01
+PRIVACY</p>
+<h1>Privacy Policy</h1>
+<p class="dated">Effective 8 October 2026</p>
+
+<p class="summary">In short: this site has no accounts, no cookies, no ads and no analytics. Most of what it remembers stays in your own browser. The only thing a visitor ever sends to me is a book recommendation they choose to submit.</p>
+
+<h2><span>01</span>Who runs this site</h2>
+<p>Rushi's Library is a personal website by Rushi, who catalogues the books they read. It is hosted on GitHub Pages. In this policy, "I" and "me" mean Rushi, and "you" means anyone visiting the site.</p>
+
+<h2><span>02</span>What stays in your browser</h2>
+<p>The site uses your browser's local storage, not cookies, to remember a few things on your own device:</p>
+<ul>
+<li>the room colour you picked and which shelves you opened with "Show all";</li>
+<li>book cover links and spine colours it has already looked up, so pages load faster next time.</li>
+</ul>
+<p>None of this is sent to me. You can clear it at any time by clearing this site's data in your browser settings.</p>
+
+<h2><span>03</span>Recommending a book</h2>
+<p>If you use <i>Recommend a book</i>, the book you picked and the name you type are sent to me by email through <a href="https://web3forms.com" target="_blank" rel="noopener">Web3Forms</a>, a form-delivery service. Please don't enter anything you would not want me to read.</p>
+<p>If I add your recommendation, the book and the name you gave appear publicly on the <b>Recommended to Me</b> shelf, as "Recommended by" that name. Use a first name or nickname if you prefer. If you would like a recommendation or your name removed, contact me (see the last section) and I will take it down.</p>
+
+<h2><span>04</span>Services the page talks to</h2>
+<p>To work, your browser connects directly to a few outside services. Each one receives the basic details any website receives, such as your IP address and browser type, under its own privacy policy:</p>
+<ul>
+<li><b>GitHub Pages</b>, which hosts the site;</li>
+<li><b>Google Fonts</b>, for the typefaces;</li>
+<li><b>Google Books</b> and <b>Open Library</b>, to look up book details and covers (only the book titles being searched or shown are sent);</li>
+<li><b>images.weserv.nl</b>, sometimes used to read a cover's colour for the spine;</li>
+<li><b>Web3Forms</b>, only when you send a recommendation.</li>
+</ul>
+<p>I do not use these services to track you, and I do not receive any visitor data from them.</p>
+
+<h2><span>05</span>What I don't do</h2>
+<ul>
+<li>No sign-ups, accounts or passwords for visitors.</li>
+<li>No cookies, advertising, tracking pixels or analytics.</li>
+<li>No selling or sharing of anything you send me.</li>
+</ul>
+
+<h2><span>06</span>For the library's owner</h2>
+<p>The editing tools save the owner's working copy of the library and their GitHub publishing key in the owner's own browser only. The key is sent only to GitHub, to publish the library.</p>
+
+<h2><span>07</span>Children</h2>
+<p>This site is not aimed at children. If you are under 18, please ask a parent or guardian before sending a recommendation with your name.</p>
+
+<h2><span>08</span>Changes and contact</h2>
+<p>If this policy changes, the new version will appear on this page with a new date. For questions or removal requests, open an issue on the site's <a href="https://github.com/ruthviksj/virtual-library/issues" target="_blank" rel="noopener">GitHub repository</a>.</p>
+
+</article>
+<footer><a href="./">Library</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></footer>
+</main>
+</body>
+</html>
