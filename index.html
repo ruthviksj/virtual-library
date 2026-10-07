@@ -378,7 +378,7 @@ footer{margin-top:60px;text-align:center;font-size:14px;color:var(--muted);font-
 .sec-row input{border:1px solid color-mix(in srgb,var(--paper-ink) 25%,transparent);background:#fffdf8;border-radius:3px;padding:7px 10px;color:var(--paper-ink);font-size:16px;min-width:0;color-scheme:light}
 .sec-row .n{font-family:var(--f-mono);font-size:11.5px;opacity:.6;white-space:nowrap}
 .sec-row .btn{padding:5px 11px;font-size:13px}
-.card .btn.close{border:1px solid color-mix(in srgb,var(--paper-ink) 30%,transparent);padding:8px 16px;font-size:14px;line-height:1.2}
+.card .btn.close{border:1px solid color-mix(in srgb,var(--paper-ink) 30%,transparent);padding:8px 16px;font-size:14px;line-height:1.2;width:auto;height:auto;border-radius:999px;display:inline-block}
 .sec-add{display:flex;gap:8px;margin-top:14px}
 .sec-add input{flex:1;min-width:0;border:1px solid color-mix(in srgb,var(--paper-ink) 25%,transparent);background:#fffdf8;border-radius:3px;padding:8px 10px;color:var(--paper-ink);font-size:16px;color-scheme:light}
 /* Visitors see a read-only library */
@@ -388,6 +388,21 @@ body.visitor #curateBtn, body.visitor #sampleNotice{display:none!important}
 .tok-steps{margin:0 0 14px;padding-left:20px;font-size:16px;line-height:29px}
 .card a{color:var(--paper-ink);text-decoration-thickness:1px;text-underline-offset:3px}
 .tok-steps code{font-family:var(--f-mono);font-size:13px;background:color-mix(in srgb,var(--paper-ink) 8%,transparent);padding:1px 5px;border-radius:3px}
+/* Visitor actions: recommend / get a recommendation */
+.visit{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.picked{display:flex;gap:14px;align-items:center;padding:10px;border:1px solid color-mix(in srgb,var(--paper-ink) 20%,transparent);border-radius:4px;background:#fffdf8}
+.picked .mini{position:relative;width:58px;height:86px;flex:none;border-radius:1px 3px 3px 1px;box-shadow:3px 3px 8px rgba(0,0,0,.25)}
+.picked .mini .cover{padding:6px}.picked .mini .ct{font-size:10px}.picked .mini .ca{font-size:6px}
+.picked b{font-family:var(--f-display);font-weight:400;font-size:19px;display:block;line-height:1.15}
+.picked span{font-style:italic;opacity:.75}
+.pick-chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 14px}
+.pick-chip{border:1px solid color-mix(in srgb,var(--paper-ink) 25%,transparent);background:transparent;color:var(--paper-ink);padding:5px 12px;border-radius:999px;cursor:pointer;font-size:14px}
+.pick-chip[aria-pressed="true"]{background:var(--paper-ink);color:var(--paper)}
+.pick-label{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.7;margin:10px 0 2px}
+.suggestion{display:grid;grid-template-columns:130px minmax(0,1fr);gap:22px;margin-top:16px;align-items:start}
+.suggestion .card-cover{width:130px;height:190px}
+.thanks{font-size:18px;line-height:32px;margin:18px 0 0}
+@media (max-width:720px){.suggestion{grid-template-columns:1fr}}
 /* Curate: drag and drop */
 body.curating .spine, body.curating .faceout{cursor:grab;touch-action:none}
 body.dragging, body.dragging *{cursor:grabbing!important;user-select:none}
@@ -450,7 +465,11 @@ body.dragging, body.dragging *{cursor:grabbing!important;user-select:none}
         <button class="swatch study" data-room="study" title="The Study" aria-label="The Study"></button>
         <button class="swatch atelier" data-room="atelier" title="Atelier" aria-label="Atelier"></button>
       </div>
-      <button class="btn" id="curateBtn" aria-pressed="false">Curate shelves</button>
+      <div class="visit">
+        <button class="btn" id="suggestBtn">Get a recommendation</button>
+        <button class="btn" id="recBtn">Recommend a book</button>
+        <button class="btn" id="curateBtn" aria-pressed="false">Curate shelves</button>
+      </div>
     </div>
   </header>
 
@@ -467,6 +486,7 @@ body.dragging, body.dragging *{cursor:grabbing!important;user-select:none}
     <span class="pubstate" id="pubState"></span>
     <button class="btn on" id="publishBtn">Publish to website</button>
     <button class="btn" id="goodreadsBtn">Import from Goodreads</button>
+    <button class="btn" id="inboxBtn">Recommendation inbox</button>
     <button class="btn" id="exportBtn">Export backup</button>
     <label class="btn" for="importFile" style="cursor:pointer">Import backup</label>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
@@ -590,7 +610,7 @@ function normalise(d){
   }
   return d;
 }
-const isSpecial = s => s && (s.kind === 'reading' || s.kind === 'want');
+const isSpecial = s => s && (s.kind === 'reading' || s.kind === 'want' || s.kind === 'recs');
 function generalShelf(){
   let s = data.shelves.find(x => !isSpecial(x));
   if (!s) { s = {id:uid(), name:'General', code:'GEN'}; data.shelves.unshift(s); }
@@ -603,7 +623,7 @@ function wantShelf(){
 }
 const thisMonth = () => new Date().toISOString().slice(0,7);
 function save(){ data.sample = false; store.set(KEY, JSON.stringify(data)); updatePubState(); }
-const libText = d => JSON.stringify({owner:d.owner, shelves:d.shelves, books:d.books});
+const libText = d => JSON.stringify({owner:d.owner, shelves:d.shelves, books:d.books, inbox:d.inbox || ''});
 function updatePubState(){
   const el = document.getElementById('pubState'); if (!el) return;
   const dirty = !published || libText(data) !== publishedText;
@@ -771,6 +791,8 @@ function render(){
     `<b>${read.length}</b> volumes, <b>${pages.toLocaleString()}</b> pages, across ${(n => `${words(n)} shel${n === 1 ? 'f' : 'ves'}`)(data.shelves.filter(s => !isSpecial(s)).length)}.${avg ? ` Average rating <b>${avg}</b>.` : ''}${now.length ? ` Currently reading <i>${esc(now[0].title)}</i>${now.length > 1 ? ` and ${words(now.length - 1)} more` : ''}.` : ''}`;
   document.body.classList.toggle('curating', curating);
   document.getElementById('sampleNotice').hidden = !data.sample;
+  document.getElementById('recBtn').hidden = !data.inbox && !isOwner;
+  document.getElementById('suggestBtn').hidden = !data.books.some(b => !isSpecial(shelfOf(b.shelf)));
 
   document.getElementById('chips').innerHTML = data.shelves.map(s =>
     `<button class="chip" data-jump="${s.id}">${esc(s.name)}</button>`).join('');
@@ -946,6 +968,7 @@ function showBook(id){
           <dt>Shelf</dt><dd>${esc(s?.name || '')}</dd>
           ${s?.sections?.find(x => x.id === b.section) ? `<dt>Section</dt><dd>${esc(s.sections.find(x => x.id === b.section).name)}</dd>` : ''}
           ${b.reading ? `<dt>Status</dt><dd>Currently reading</dd>` : ''}
+          ${b.recBy ? `<dt>Recommended by</dt><dd>${esc(b.recBy)}${b.recAt ? ' · ' + esc(fmtMonth(b.recAt.slice(0,7))) : ''}</dd>` : ''}
           ${b.finished && !b.reading ? `<dt>Finished</dt><dd>${esc(fmtMonth(b.finished))}</dd>` : ''}
           ${b.rating ? `<dt>Rating</dt><dd>${stars(b.rating)}</dd>` : ''}
         </dl>
@@ -954,7 +977,7 @@ function showBook(id){
           <button class="btn" data-act="edit" data-id="${b.id}">Edit</button>
           ${b.reading
             ? `<button class="btn primary" data-act="finished" data-id="${b.id}">Mark as finished</button>`
-            : `<button class="btn primary" data-act="reading" data-id="${b.id}">${s?.kind === 'want' ? 'Start reading' : 'Mark as currently reading'}</button>`}
+            : `<button class="btn primary" data-act="reading" data-id="${b.id}">${s?.kind === 'want' || s?.kind === 'recs' ? 'Start reading' : 'Mark as currently reading'}</button>`}
           <button class="btn" data-act="fav" data-id="${b.id}">${b.fav ? 'Turn spine out' : 'Display cover out'}</button>
           <button class="btn danger" data-act="delbook" data-id="${b.id}">Remove</button>
         </div>
@@ -1057,7 +1080,7 @@ function showForm(b, shelfId, sectionId){
   });
 }
 
-async function lookup(q){
+async function lookup(q, onPick){
   const hint = document.getElementById('lookupHint'), res = document.getElementById('results');
   if (!q.trim()) { hint.textContent = 'Type a title to search for.'; return; }
   hint.textContent = 'Searching Google Books and Open Library…';
@@ -1079,10 +1102,11 @@ async function lookup(q){
     seen.add(k); list.push({...d, key:k});
   }
   if (!list.length) { hint.textContent = 'No matches in either database. Fill the fields in by hand.'; res.innerHTML = ''; return; }
-  hint.textContent = 'Pick the right book to fill the form.';
+  hint.textContent = onPick ? 'Pick the book from the results.' : 'Pick the right book to fill the form.';
   res.innerHTML = list.slice(0, 14).map((d,i) => `<button type="button" data-i="${i}">${d.cover ? `<img src="${esc(d.cover)}" alt="">` : '<img alt="">'}${esc(d.title)}<span class="src">${esc(d.author.split('&')[0])}${d.year ? ' · ' + d.year : ''}</span></button>`).join('');
   res.querySelectorAll('button').forEach(btn => btn.onclick = () => {
     const d = list[+btn.dataset.i], set = (id,val) => { if (val) document.getElementById(id).value = val; };
+    if (onPick) { res.querySelectorAll('button').forEach(x => x.style.outline = ''); btn.style.outline = '2px solid currentColor'; return onPick(d); }
     set('f-title', d.title); set('f-author', d.author); set('f-year', d.year); set('f-pages', d.pages);
     const form = document.getElementById('bookForm');
     document.getElementById('f-cover').value = d.cover || '';
@@ -1119,7 +1143,7 @@ document.addEventListener('click', e => {
   if (act === 'edit') showForm(data.books.find(b => b.id === bid));
   if (act === 'reading') {
     const b = data.books.find(x => x.id === bid);
-    if (shelfOf(b.shelf)?.kind === 'want') {
+    if (['want', 'recs'].includes(shelfOf(b.shelf)?.kind)) {
       // a book leaving the to-read pile needs a real shelf to live on
       const normal = data.shelves.filter(x => !isSpecial(x));
       t.closest('.card-actions').innerHTML = `<p class="notes" style="margin:0">Which shelf does it belong on?</p>
@@ -1454,7 +1478,7 @@ async function publish(){
     // share cover links and spine colours too, so visitors do not have to look them all up again
     const covers = {}, colors = {};
     data.books.forEach(b => { const k = coverKey(b), u = coverUrl(b); if (!b.cover && coverCache[k]) covers[k] = coverCache[k]; if (u && colorCache[u]) colors[u] = colorCache[u]; });
-    const body = JSON.stringify({owner:data.owner, shelves:data.shelves, books:data.books, covers, colors, publishedAt:new Date().toISOString()}, null, 1);
+    const body = JSON.stringify({owner:data.owner, shelves:data.shelves, books:data.books, inbox:data.inbox || '', covers, colors, publishedAt:new Date().toISOString()}, null, 1);
     const put = await fetch(api, {method:'PUT', headers, body: JSON.stringify({message:`Update library (${data.books.length} books)`, content: b64(body), branch:'main', ...(sha ? {sha} : {})})});
     if (put.status === 401 || put.status === 403 || put.status === 404) throw new Error('auth');
     if (!put.ok) throw new Error('fail');
@@ -1472,8 +1496,167 @@ document.getElementById('loadPubBtn').onclick = e => {
   if (!published) return toast('Nothing has been published yet.');
   if (!t.dataset.armed) { t.dataset.armed = '1'; t.textContent = 'Click again: replaces your local shelves'; return; }
   delete t.dataset.armed; t.textContent = 'Load published version';
-  data = normalise({sample:false, owner:published.owner, shelves:published.shelves, books:published.books}); store.set(KEY, JSON.stringify(data)); render(); updatePubState();
+  data = normalise({sample:false, owner:published.owner, shelves:published.shelves, books:published.books, inbox:published.inbox || ''}); store.set(KEY, JSON.stringify(data)); render(); updatePubState();
 };
+
+/* ---------- recommendations from visitors (via a Web3Forms email inbox) ---------- */
+const firstName = () => ((data.owner || '').match(/^(.+?)['’]s\b/) || [])[1] || 'me';
+const b64url = str => b64(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64url = s => { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const bin = atob(s); return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))); };
+function recShelf(){
+  let s = data.shelves.find(x => x.kind === 'recs');
+  if (!s) { s = {id:uid(), name:'Recommended to Me', code:'REC', kind:'recs'}; const wi = data.shelves.findIndex(x => x.kind === 'want'); data.shelves.splice(wi < 0 ? data.shelves.length : wi, 0, s); }
+  return s;
+}
+function showRecommend(){
+  if (!data.inbox) return isOwner ? showInbox() : null;
+  let pick = null;
+  openModal(`
+    <div class="card-head"><div class="callno">RECOMMEND\nA BOOK</div><button class="close" aria-label="Close">×</button></div>
+    <form class="form" id="recForm" novalidate>
+      <h2 id="cardTitle">Recommend a book to ${esc(firstName())}</h2>
+      <div class="field wide">
+        <label for="f-lookup">Find the book</label>
+        <div class="lookup"><input id="f-lookup" placeholder="Type a title or author" autofocus><button type="button" class="btn" id="lookupBtn">Search</button></div>
+        <p class="hint" id="lookupHint">Search, then pick the book from the results.</p>
+      </div>
+      <div class="results" id="results"></div>
+      <div class="field wide" id="recPicked" hidden></div>
+      <div class="field wide"><label for="f-recby">Recommended by</label><input id="f-recby" placeholder="Your name" autocomplete="name"></div>
+      <input type="text" id="f-bot" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true">
+      <p class="err" id="recErr" hidden></p>
+      <div class="card-actions" style="grid-column:1/-1"><button class="btn primary" type="submit">Send recommendation</button><button class="btn close" type="button">Cancel</button></div>
+    </form>`);
+  const f = document.getElementById('recForm'), err = msg => { const e = document.getElementById('recErr'); e.textContent = msg; e.hidden = !msg; };
+  const onPick = d => {
+    pick = d; err('');
+    const tmp = {id:'tmp', title:d.title, author:d.author, cover:d.cover};
+    const box = document.getElementById('recPicked'); box.hidden = false;
+    box.innerHTML = `<div class="picked"><div class="mini">${coverHTML(tmp)}</div><div><b>${esc(d.title)}</b><span>${esc(d.author || 'Unknown author')}${d.year ? ' · ' + esc(d.year) : ''}</span></div></div>`;
+    document.getElementById('f-recby').focus();
+  };
+  const go = () => lookup(document.getElementById('f-lookup').value, onPick);
+  document.getElementById('lookupBtn').onclick = go;
+  document.getElementById('f-lookup').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
+  f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const by = document.getElementById('f-recby').value.trim();
+    if (!pick) return err('Search for the book and pick it from the results first.');
+    if (!by) return err('Add your name so ' + firstName() + ' knows who it came from.');
+    const btn = f.querySelector('[type=submit]'); btn.disabled = true; btn.textContent = 'Sending…';
+    const rec = {t:pick.title, a:pick.author, y:pick.year, p:pick.pages, c:pick.cover, i:pick.isbn, by, at:new Date().toISOString().slice(0,10)};
+    const link = location.origin + location.pathname + '#rec=' + b64url(JSON.stringify(rec));
+    try {
+      if (!document.getElementById('f-bot').value) {
+        const r = await fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json', Accept:'application/json'},
+          body: JSON.stringify({access_key:data.inbox, subject:`Book recommendation: ${pick.title} (from ${by})`, from_name:'Virtual Library',
+            'Book': pick.title, 'Author': pick.author || '', 'Recommended by': by, 'Add it to your shelf': link})});
+        const j = await r.json().catch(() => ({}));
+        if (!j.success) throw new Error(j.message || 'failed');
+      }
+      card.querySelector('#recForm').innerHTML = `<h2 id="cardTitle" style="grid-column:1/-1">Thank you, ${esc(by)}</h2>
+        <p class="thanks" style="grid-column:1/-1"><i>${esc(pick.title)}</i> is on its way to ${esc(firstName())}. Once it is added, it will sit on the <b>Recommended to Me</b> shelf with your name on it.</p>
+        <div class="card-actions" style="grid-column:1/-1"><button class="btn close" type="button">Close</button></div>`;
+    } catch(ex) { btn.disabled = false; btn.textContent = 'Send recommendation'; err('It could not be sent just now. Check your connection and try again.'); }
+  });
+}
+function showInbox(){
+  openModal(`
+    <div class="card-head"><div class="callno">RECOMMENDATION\nINBOX</div><button class="close" aria-label="Close">×</button></div>
+    <h2 id="cardTitle" style="margin-top:22px">Where recommendations go</h2>
+    <p class="notes" style="font-size:16px;line-height:28px">When a visitor recommends a book, it is emailed to you with an <i>Add it to your shelf</i> link. This uses Web3Forms, a free form service. Set it up once:</p>
+    <ol class="tok-steps">
+      <li>Open <a href="https://web3forms.com" target="_blank" rel="noopener">web3forms.com</a>.</li>
+      <li>Enter the email address you want recommendations sent to and create an access key.</li>
+      <li>The key arrives in that inbox. Paste it below.</li>
+      <li>Click <b>Publish to website</b> so the button turns on for visitors.</li>
+    </ol>
+    <form class="sec-add" id="inboxForm"><input id="inboxIn" value="${esc(data.inbox || '')}" placeholder="Web3Forms access key" aria-label="Web3Forms access key" autocomplete="off"><button class="btn primary" type="submit">Save</button></form>
+    ${data.inbox ? '<div class="card-actions"><button class="btn danger" type="button" id="inboxOff">Turn off recommendations</button></div>' : ''}`);
+  document.getElementById('inboxForm').addEventListener('submit', e => {
+    e.preventDefault(); data.inbox = document.getElementById('inboxIn').value.trim(); save(); render(); closeModal();
+    toast(data.inbox ? 'Saved. Publish so visitors can recommend books.' : 'Recommendations turned off.');
+  });
+  document.getElementById('inboxOff')?.addEventListener('click', () => { data.inbox = ''; save(); render(); closeModal(); toast('Recommendations turned off. Publish to apply.'); });
+}
+function handleRecLink(){
+  const m = location.hash.match(/^#rec=(.+)$/); if (!m) return;
+  let rec; try { rec = JSON.parse(unb64url(m[1])); } catch(e) { return; }
+  history.replaceState(null, '', location.pathname);
+  if (!isOwner) {
+    openModal(`<div class="card-head"><div class="callno">RECOMMENDATION</div><button class="close" aria-label="Close">×</button></div>
+      <h2 id="cardTitle" style="margin-top:22px">${esc(rec.by)} recommends <i>${esc(rec.t)}</i></h2>
+      <p class="notes" style="font-size:16px;line-height:28px">This link adds the book to the library's <b>Recommended to Me</b> shelf. Open it in the browser where you curate your library, or confirm that this browser is yours.</p>
+      <div class="card-actions"><button class="btn primary" type="button" id="iamOwner">This is my library, add it here</button><button class="btn close" type="button">Not now</button></div>`);
+    document.getElementById('iamOwner').onclick = () => { store.set(OWNERKEY, '1'); location.hash = 'rec=' + m[1]; location.reload(); };
+    return;
+  }
+  const dup = data.books.find(b => (b.title + '|' + b.author).toLowerCase() === (rec.t + '|' + (rec.a || '')).toLowerCase());
+  const tmp = {id:'tmp', title:rec.t, author:rec.a || '', cover:rec.c};
+  openModal(`<div class="card-head"><div class="callno">RECOMMENDATION\n${esc((rec.at || '').replace(/-/g, '.'))}</div><button class="close" aria-label="Close">×</button></div>
+    <div class="card-body"><div class="card-cover">${coverHTML(tmp)}</div><div style="min-width:0">
+      <h2 id="cardTitle">${esc(rec.t)}</h2><p class="by">${esc(rec.a || '')}</p>
+      <dl class="meta"><dt>Recommended by</dt><dd>${esc(rec.by)}</dd>${rec.y ? `<dt>Published</dt><dd>${esc(rec.y)}</dd>` : ''}${dup ? `<dt>Already on</dt><dd>${esc(shelfOf(dup.shelf)?.name || '')}</dd>` : ''}</dl>
+      <div class="card-actions">
+        ${dup ? `<button class="btn primary" type="button" id="recCredit">Credit ${esc(rec.by)} on my copy</button>` : `<button class="btn primary" type="button" id="recAdd">Add to Recommended to Me</button>`}
+        <button class="btn close" type="button">Not for me</button>
+      </div></div></div>`);
+  document.getElementById('recAdd')?.addEventListener('click', () => {
+    const s = recShelf();
+    const b = {id:uid(), title:rec.t, author:rec.a || '', year:+rec.y || rec.y || '', pages:+rec.p || '', cover:rec.c || '', isbn:rec.i || '', shelf:s.id, rating:0, finished:'', notes:'', fav:false, recBy:rec.by, recAt:rec.at || ''};
+    data.books.push(b); save(); render(); closeModal(); toast('Added. Publish to show it on your website.');
+    setTimeout(() => document.getElementById('shelf-' + s.id)?.scrollIntoView({behavior:'smooth', block:'center'}), 260);
+  });
+  document.getElementById('recCredit')?.addEventListener('click', () => { dup.recBy = rec.by; dup.recAt = rec.at || ''; save(); render(); closeModal(); toast(`Credited ${rec.by}. Publish to show it.`); });
+}
+
+/* ---------- get a recommendation from these shelves ---------- */
+function showSuggest(){
+  const pool = data.books.filter(b => !isSpecial(shelfOf(b.shelf)));
+  const shelves = data.shelves.filter(s => pool.some(b => b.shelf === s.id));
+  let shelf = '', len = '', last = null;
+  const lens = [['', 'Any length'], ['s', 'Short'], ['m', 'Medium'], ['l', 'Long']];
+  openModal(`
+    <div class="card-head"><div class="callno">READER'S\nADVISORY</div><button class="close" aria-label="Close">×</button></div>
+    <h2 id="cardTitle" style="margin-top:22px">What should you read next?</h2>
+    <p class="pick-label">From which shelf</p>
+    <div class="pick-chips" id="pkShelf"><button type="button" class="pick-chip" data-v="" aria-pressed="true">Anything</button>${shelves.map(s => `<button type="button" class="pick-chip" data-v="${s.id}" aria-pressed="false">${esc(s.name)}</button>`).join('')}</div>
+    <p class="pick-label">How long</p>
+    <div class="pick-chips" id="pkLen">${lens.map(([v, l]) => `<button type="button" class="pick-chip" data-v="${v}" aria-pressed="${v === ''}">${l}</button>`).join('')}</div>
+    <div class="card-actions"><button class="btn primary" type="button" id="pkGo">Pick one for me</button></div>
+    <div id="pkOut"></div>`);
+  const chips = (id, set) => document.getElementById(id).addEventListener('click', e => {
+    const c = e.target.closest('.pick-chip'); if (!c) return;
+    document.querySelectorAll(`#${id} .pick-chip`).forEach(x => x.setAttribute('aria-pressed', x === c)); set(c.dataset.v);
+  });
+  chips('pkShelf', v => shelf = v); chips('pkLen', v => len = v);
+  const fits = b => { const p = +b.pages || 0; return !len || (len === 's' ? p && p < 250 : len === 'm' ? p >= 250 && p <= 450 : p > 450); };
+  const pickOne = () => {
+    let c = pool.filter(b => (!shelf || b.shelf === shelf) && fits(b));
+    if (c.length > 1 && last) c = c.filter(b => b.id !== last);
+    const out = document.getElementById('pkOut');
+    if (!c.length) { out.innerHTML = '<p class="thanks"><i>Nothing matches that combination. Try another shelf or length.</i></p>'; return; }
+    const w = b => ({5:6, 4:3, 3:1, 2:.4, 1:.2}[b.rating] ?? 1.2) + (b.fav ? 3 : 0) + (b.notes ? 1 : 0);
+    let r = Math.random() * c.reduce((t, b) => t + w(b), 0), b = c[0];
+    for (const x of c) { r -= w(x); if (r <= 0) { b = x; break; } }
+    last = b.id; findCover(b);
+    out.innerHTML = `<div class="suggestion"><div class="card-cover">${coverHTML(b)}</div><div style="min-width:0">
+      <h2>${esc(b.title)}</h2><p class="by">${esc(b.author)}</p>
+      <dl class="meta">${b.rating ? `<dt>${esc(firstName())} rated it</dt><dd>${stars(b.rating)}</dd>` : ''}${b.pages ? `<dt>Pages</dt><dd>${esc(b.pages)}</dd>` : ''}<dt>Shelf</dt><dd>${esc(shelfOf(b.shelf)?.name || '')}</dd></dl>
+      ${b.notes ? `<p class="notes">${esc(b.notes)}</p>` : ''}
+      <div class="card-actions"><button class="btn" type="button" id="pkAgain">Another one</button><button class="btn" type="button" id="pkFind" data-id="${b.id}">Find it on the shelf</button></div>
+    </div></div>`;
+    document.getElementById('pkAgain').onclick = pickOne;
+    document.getElementById('pkFind').onclick = () => {
+      closeModal();
+      setTimeout(() => { const el = document.querySelector(`.case [data-id="${b.id}"]`); el?.scrollIntoView({behavior:'smooth', block:'center', inline:'center'}); el?.classList.add('hit'); setTimeout(() => el?.classList.remove('hit'), 1800); }, 240);
+    };
+  };
+  document.getElementById('pkGo').onclick = pickOne;
+}
+document.getElementById('recBtn').onclick = showRecommend;
+document.getElementById('suggestBtn').onclick = showSuggest;
+document.getElementById('inboxBtn').onclick = showInbox;
 
 /* ---------- start up ---------- */
 setRoom(store.get(ROOMKEY) || '');
@@ -1489,9 +1672,10 @@ render();
     Object.assign(coverCache, published.covers || {}); Object.assign(colorCache, published.colors || {});
     // visitors always see the published library; the owner keeps their working copy unless they have none
     const hasLocal = (() => { try { const d = JSON.parse(store.get(KEY) || 'null'); return d && !d.sample; } catch(e) { return false; } })();
-    if (!isOwner || !hasLocal) { data = normalise({sample:false, owner:published.owner, shelves:published.shelves, books:published.books}); render(); }
+    if (!isOwner || !hasLocal) { data = normalise({sample:false, owner:published.owner, shelves:published.shelves, books:published.books, inbox:published.inbox || ''}); render(); }
   } catch(e) { /* no published copy yet: show what we have */ }
   updatePubState();
+  handleRecLink();
 })();
 })();
 </script>
