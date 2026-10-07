@@ -486,6 +486,7 @@ body.dragging, body.dragging *{cursor:grabbing!important;user-select:none}
     <span class="pubstate" id="pubState"></span>
     <button class="btn on" id="publishBtn">Publish to website</button>
     <button class="btn" id="goodreadsBtn">Import from Goodreads</button>
+    <button class="btn" id="addRecsBtn">Add recommendation</button>
     <button class="btn" id="inboxBtn">Recommendation inbox</button>
     <button class="btn" id="exportBtn">Export backup</button>
     <label class="btn" for="importFile" style="cursor:pointer">Import backup</label>
@@ -1544,13 +1545,12 @@ function showRecommend(){
     if (!pick) return err('Search for the book and pick it from the results first.');
     if (!by) return err('Add your name so ' + firstName() + ' knows who it came from.');
     const btn = f.querySelector('[type=submit]'); btn.disabled = true; btn.textContent = 'Sending…';
-    const rec = {t:pick.title, a:pick.author, y:pick.year, p:pick.pages, c:pick.cover, i:pick.isbn, by, at:new Date().toISOString().slice(0,10)};
-    const link = location.origin + location.pathname + '#rec=' + b64url(JSON.stringify(rec));
+    const link = location.origin + location.pathname + '#rec=' + b64url([pick.title, pick.author || '', by, pick.isbn || ''].join('\u001f'));
     try {
       if (!document.getElementById('f-bot').value) {
         const r = await fetch('https://api.web3forms.com/submit', {method:'POST', headers:{'Content-Type':'application/json', Accept:'application/json'},
           body: JSON.stringify({access_key:data.inbox, subject:`Book recommendation: ${pick.title} (from ${by})`, from_name:'Virtual Library',
-            'Book': pick.title, 'Author': pick.author || '', 'Recommended by': by, 'Add it to your shelf': link})});
+            'Book': pick.title, 'Author': pick.author || '', 'Recommended by': by, 'Year': pick.year || '', 'Pages': pick.pages || '', 'Add it to your shelf': link})});
         const j = await r.json().catch(() => ({}));
         if (!j.success) throw new Error(j.message || 'failed');
       }
@@ -1579,9 +1579,65 @@ function showInbox(){
   });
   document.getElementById('inboxOff')?.addEventListener('click', () => { data.inbox = ''; save(); render(); closeModal(); toast('Recommendations turned off. Publish to apply.'); });
 }
+function decodeRec(code){
+  try {
+    const raw = unb64url(code);
+    if (raw.startsWith('{')) return JSON.parse(raw);
+    const [t, a, by, i] = raw.split('\u001f');
+    return t && by ? {t, a, by, i} : null;
+  } catch(e) { return null; }
+}
+// read recommendations out of pasted email text: the links if present, otherwise the Book / Author / Recommended by lines
+function parseRecEmails(text){
+  const out = [], seen = new Set();
+  const grab = label => (text.match(new RegExp(label + '\\s*[:\\n]\\s*([^\\n]+)', 'i')) || [])[1]?.trim();
+  for (const m of text.matchAll(/#rec=([A-Za-z0-9_\-]+)/g)) {
+    const r = decodeRec(m[1]); if (!r) continue;
+    const k = (r.t + '|' + r.by).toLowerCase(); if (!seen.has(k)) { seen.add(k); out.push(r); }
+  }
+  if (out.length === 1) { out[0].y = out[0].y || grab('Year') || ''; out[0].p = out[0].p || grab('Pages') || ''; }
+  if (!out.length) {
+    const t = grab('Book'), by = grab('Recommended by');
+    if (t && by) out.push({t, a: grab('Author') || '', by, y: grab('Year') || '', p: grab('Pages') || ''});
+  }
+  return out;
+}
+function addRec(rec){
+  const dup = data.books.find(b => (b.title + '|' + b.author).toLowerCase() === (rec.t + '|' + (rec.a || '')).toLowerCase());
+  const at = rec.at || new Date().toISOString().slice(0,10);
+  if (dup) { dup.recBy = rec.by; dup.recAt = at; return 'credited'; }
+  const s = recShelf();
+  data.books.push({id:uid(), title:rec.t, author:rec.a || '', year:+rec.y || rec.y || '', pages:+rec.p || '', cover:rec.c || '', isbn:rec.i || '', shelf:s.id, rating:0, finished:'', notes:'', fav:false, recBy:rec.by, recAt:at});
+  return 'added';
+}
+function showAddRecs(){
+  openModal(`
+    <div class="card-head"><div class="callno">ADD\nRECOMMENDATIONS</div><button class="close" aria-label="Close">×</button></div>
+    <h2 id="cardTitle" style="margin-top:22px">Add recommendations from email</h2>
+    <p class="notes" style="font-size:16px;line-height:28px">Open the recommendation email, select everything (Ctrl+A), copy it, and paste it here. You can paste several emails at once.</p>
+    <div class="field wide" style="margin-top:8px"><textarea id="recPaste" style="min-height:150px;width:100%;border:1px solid color-mix(in srgb,var(--paper-ink) 25%,transparent);background:#fffdf8;border-radius:3px;padding:10px;color:var(--paper-ink);font-size:15px;color-scheme:light" placeholder="Paste the email here" aria-label="Pasted email" autofocus></textarea></div>
+    <div id="recFound"></div>
+    <div class="card-actions"><button class="btn primary" type="button" id="recAddAll" disabled>Add to Recommended to Me</button><button class="btn close" type="button">Cancel</button></div>`);
+  const ta = document.getElementById('recPaste'), found = document.getElementById('recFound'), btn = document.getElementById('recAddAll');
+  let recs = [];
+  ta.addEventListener('input', () => {
+    recs = parseRecEmails(ta.value);
+    btn.disabled = !recs.length;
+    found.innerHTML = ta.value.trim() ? (recs.length
+      ? `<p class="pick-label">Found ${recs.length}</p>` + recs.map(r => `<div class="picked" style="margin-bottom:8px"><div><b>${esc(r.t)}</b><span>${esc(r.a || '')} · recommended by ${esc(r.by)}</span></div></div>`).join('')
+      : '<p class="err">No recommendation found in that text. Make sure you copied the whole email.</p>') : '';
+  });
+  btn.onclick = () => {
+    let added = 0, credited = 0;
+    recs.forEach(r => addRec(r) === 'added' ? added++ : credited++);
+    save(); render(); closeModal();
+    toast(`${added ? `Added ${added}` : ''}${added && credited ? ', ' : ''}${credited ? `credited ${credited}` : ''}. Publish to show ${added + credited > 1 ? 'them' : 'it'} on your website.`);
+    const s = data.shelves.find(x => x.kind === 'recs'); setTimeout(() => s && document.getElementById('shelf-' + s.id)?.scrollIntoView({behavior:'smooth', block:'center'}), 260);
+  };
+}
 function handleRecLink(){
   const m = location.hash.match(/^#rec=(.+)$/); if (!m) return;
-  let rec; try { rec = JSON.parse(unb64url(m[1])); } catch(e) { return; }
+  const rec = decodeRec(m[1]); if (!rec) return;
   history.replaceState(null, '', location.pathname);
   if (!isOwner) {
     openModal(`<div class="card-head"><div class="callno">RECOMMENDATION</div><button class="close" aria-label="Close">×</button></div>
@@ -1602,12 +1658,10 @@ function handleRecLink(){
         <button class="btn close" type="button">Not for me</button>
       </div></div></div>`);
   document.getElementById('recAdd')?.addEventListener('click', () => {
-    const s = recShelf();
-    const b = {id:uid(), title:rec.t, author:rec.a || '', year:+rec.y || rec.y || '', pages:+rec.p || '', cover:rec.c || '', isbn:rec.i || '', shelf:s.id, rating:0, finished:'', notes:'', fav:false, recBy:rec.by, recAt:rec.at || ''};
-    data.books.push(b); save(); render(); closeModal(); toast('Added. Publish to show it on your website.');
-    setTimeout(() => document.getElementById('shelf-' + s.id)?.scrollIntoView({behavior:'smooth', block:'center'}), 260);
+    addRec(rec); save(); render(); closeModal(); toast('Added. Publish to show it on your website.');
+    const s = recShelf(); setTimeout(() => document.getElementById('shelf-' + s.id)?.scrollIntoView({behavior:'smooth', block:'center'}), 260);
   });
-  document.getElementById('recCredit')?.addEventListener('click', () => { dup.recBy = rec.by; dup.recAt = rec.at || ''; save(); render(); closeModal(); toast(`Credited ${rec.by}. Publish to show it.`); });
+  document.getElementById('recCredit')?.addEventListener('click', () => { addRec(rec); save(); render(); closeModal(); toast(`Credited ${rec.by}. Publish to show it.`); });
 }
 
 /* ---------- get a recommendation from these shelves ---------- */
@@ -1657,6 +1711,7 @@ function showSuggest(){
 document.getElementById('recBtn').onclick = showRecommend;
 document.getElementById('suggestBtn').onclick = showSuggest;
 document.getElementById('inboxBtn').onclick = showInbox;
+document.getElementById('addRecsBtn').onclick = showAddRecs;
 
 /* ---------- start up ---------- */
 setRoom(store.get(ROOMKEY) || '');
