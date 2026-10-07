@@ -381,6 +381,13 @@ footer{margin-top:60px;text-align:center;font-size:14px;color:var(--muted);font-
 .card .btn.close{border:1px solid color-mix(in srgb,var(--paper-ink) 30%,transparent);padding:8px 16px;font-size:14px;line-height:1.2}
 .sec-add{display:flex;gap:8px;margin-top:14px}
 .sec-add input{flex:1;min-width:0;border:1px solid color-mix(in srgb,var(--paper-ink) 25%,transparent);background:#fffdf8;border-radius:3px;padding:8px 10px;color:var(--paper-ink);font-size:16px;color-scheme:light}
+/* Visitors see a read-only library */
+body.visitor #curateBtn, body.visitor #sampleNotice{display:none!important}
+.pubstate{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;padding:4px 10px;border-radius:999px;background:var(--chip);white-space:nowrap}
+.pubstate.dirty{background:color-mix(in srgb,var(--accent) 30%,transparent)}
+.tok-steps{margin:0 0 14px;padding-left:20px;font-size:16px;line-height:29px}
+.card a{color:var(--paper-ink);text-decoration-thickness:1px;text-underline-offset:3px}
+.tok-steps code{font-family:var(--f-mono);font-size:13px;background:color-mix(in srgb,var(--paper-ink) 8%,transparent);padding:1px 5px;border-radius:3px}
 /* Curate: drag and drop */
 body.curating .spine, body.curating .faceout{cursor:grab;touch-action:none}
 body.dragging, body.dragging *{cursor:grabbing!important;user-select:none}
@@ -457,10 +464,13 @@ body.dragging, body.dragging *{cursor:grabbing!important;user-select:none}
 
   <div class="curate-bar" id="curateBar" hidden>
     <p id="curateMsg">Curating. Drag books to reorder them or move them to another shelf. Add books from any shelf plank.</p>
+    <span class="pubstate" id="pubState"></span>
+    <button class="btn on" id="publishBtn">Publish to website</button>
     <button class="btn" id="goodreadsBtn">Import from Goodreads</button>
     <button class="btn" id="exportBtn">Export backup</button>
     <label class="btn" for="importFile" style="cursor:pointer">Import backup</label>
     <input type="file" id="importFile" accept="application/json,.json" hidden>
+    <button class="btn" id="loadPubBtn">Load published version</button>
     <button class="btn" id="resetBtn">Reset to sample</button>
   </div>
   <p class="notice" id="sampleNotice" hidden>These are sample books to show the layout. <button id="startCurate">Start curating</button> to make the shelves yours.</p>
@@ -540,6 +550,14 @@ const SAMPLE = {
   const where = {'The Remains of the Day':'lit','Norwegian Wood':'lit','The God of Small Things':'lit','The Midnight Library':'lit','Klara and the Sun':'sf','Project Hail Mary':'sf','Circe':'myth','The Little Prince':'cls','Dune':'bought','Ogilvy on Advertising':'tobuy','The Overstory':'tobuy'};
   SAMPLE.books.forEach(b => { if (where[b.title]) b.section = where[b.title]; });
 })();
+/* ---------- who is looking: the owner (curates and publishes) or a visitor (reads) ---------- */
+const OWNERKEY = 'vlib.owner', TOKENKEY = 'vlib.ghtoken';
+if (location.hash === '#owner') { store.set(OWNERKEY, '1'); history.replaceState(null, '', location.pathname); }
+if (location.hash === '#visitor') { store.set(OWNERKEY, ''); history.replaceState(null, '', location.pathname); }
+// anyone who already curated in this browser is the owner
+try { const d = JSON.parse(store.get(KEY) || 'null'); if (d && !d.sample && store.get(OWNERKEY) === null) store.set(OWNERKEY, '1'); } catch(e){}
+const isOwner = store.get(OWNERKEY) === '1';
+let published = null, publishedText = '';
 let data = load();
 let curating = false;
 let expanded = new Set();
@@ -584,7 +602,14 @@ function wantShelf(){
   return s;
 }
 const thisMonth = () => new Date().toISOString().slice(0,7);
-function save(){ data.sample = false; store.set(KEY, JSON.stringify(data)); }
+function save(){ data.sample = false; store.set(KEY, JSON.stringify(data)); updatePubState(); }
+const libText = d => JSON.stringify({owner:d.owner, shelves:d.shelves, books:d.books});
+function updatePubState(){
+  const el = document.getElementById('pubState'); if (!el) return;
+  const dirty = !published || libText(data) !== publishedText;
+  el.textContent = !published ? 'Not published yet' : dirty ? 'Unpublished changes' : 'Up to date with the website';
+  el.classList.toggle('dirty', dirty);
+}
 
 /* ---------- helpers ---------- */
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -925,7 +950,7 @@ function showBook(id){
           ${b.rating ? `<dt>Rating</dt><dd>${stars(b.rating)}</dd>` : ''}
         </dl>
         <p class="notes ${b.notes ? '' : 'none'}">${b.notes ? esc(b.notes) : 'No notes on this one yet.'}</p>
-        <div class="card-actions">
+        <div class="card-actions" ${isOwner ? '' : 'hidden'}>
           <button class="btn" data-act="edit" data-id="${b.id}">Edit</button>
           ${b.reading
             ? `<button class="btn primary" data-act="finished" data-id="${b.id}">Mark as finished</button>`
@@ -1386,8 +1411,88 @@ function setRoom(r){
   const active = r || (matchMedia('(prefers-color-scheme: dark)').matches ? 'reading' : 'atelier');
   document.querySelectorAll('.swatch').forEach(s => s.setAttribute('aria-pressed', s.dataset.room === active));
 }
+/* ---------- publishing: write library.json to the GitHub repo behind this site ---------- */
+function repoInfo(){
+  const m = location.hostname.match(/^([^.]+)\.github\.io$/);
+  const saved = JSON.parse(store.get('vlib.repo') || 'null');
+  if (saved) return saved;
+  if (m) return {owner: m[1], repo: location.pathname.split('/').filter(Boolean)[0] || (m[1] + '.github.io')};
+  return {owner:'ruthviksj', repo:'virtual-library'};
+}
+const b64 = str => { const bytes = new TextEncoder().encode(str); let bin = ''; bytes.forEach(x => bin += String.fromCharCode(x)); return btoa(bin); };
+function askToken(then){
+  const {owner, repo} = repoInfo();
+  openModal(`
+    <div class="card-head"><div class="callno">PUBLISH\nSETUP</div><button class="close" aria-label="Close">×</button></div>
+    <h2 id="cardTitle" style="margin-top:22px">Connect this library to GitHub</h2>
+    <p class="notes" style="font-size:16px;line-height:28px">Publishing saves your shelves into the <b>${esc(owner)}/${esc(repo)}</b> repository so everyone sees them. This needs a one-time key from GitHub, which stays in this browser only.</p>
+    <ol class="tok-steps">
+      <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li>
+      <li>Name it <code>Virtual Library</code> and pick an expiry you are happy with.</li>
+      <li>Under <b>Repository access</b>, choose <i>Only select repositories</i> and pick <code>${esc(repo)}</code>.</li>
+      <li>Under <b>Permissions</b>, set <b>Contents</b> to <i>Read and write</i>.</li>
+      <li>Click <b>Generate token</b>, copy it, and paste it below.</li>
+    </ol>
+    <form class="sec-add" id="tokForm"><input id="tokIn" type="password" placeholder="github_pat_…" aria-label="GitHub token" autofocus autocomplete="off"><button class="btn primary" type="submit">Save and publish</button></form>
+    <p class="err" id="tokErr" hidden></p>`);
+  document.getElementById('tokForm').addEventListener('submit', e => {
+    e.preventDefault(); const v = document.getElementById('tokIn').value.trim();
+    if (!v) return; store.set(TOKENKEY, v); closeModal(); then();
+  });
+}
+async function publish(){
+  const token = store.get(TOKENKEY); if (!token) return askToken(publish);
+  const btn = document.getElementById('publishBtn'), {owner, repo} = repoInfo();
+  const api = `https://api.github.com/repos/${owner}/${repo}/contents/library.json`;
+  const headers = {Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json'};
+  btn.disabled = true; btn.textContent = 'Publishing…';
+  try {
+    let sha;
+    const cur = await fetch(api + '?ref=main&t=' + Date.now(), {headers});
+    if (cur.status === 401 || cur.status === 403) throw new Error('auth');
+    if (cur.ok) sha = (await cur.json()).sha;
+    // share cover links and spine colours too, so visitors do not have to look them all up again
+    const covers = {}, colors = {};
+    data.books.forEach(b => { const k = coverKey(b), u = coverUrl(b); if (!b.cover && coverCache[k]) covers[k] = coverCache[k]; if (u && colorCache[u]) colors[u] = colorCache[u]; });
+    const body = JSON.stringify({owner:data.owner, shelves:data.shelves, books:data.books, covers, colors, publishedAt:new Date().toISOString()}, null, 1);
+    const put = await fetch(api, {method:'PUT', headers, body: JSON.stringify({message:`Update library (${data.books.length} books)`, content: b64(body), branch:'main', ...(sha ? {sha} : {})})});
+    if (put.status === 401 || put.status === 403 || put.status === 404) throw new Error('auth');
+    if (!put.ok) throw new Error('fail');
+    published = JSON.parse(body); publishedText = libText(published); updatePubState();
+    toast('Published. The website updates in about a minute.');
+  } catch(err) {
+    if (err.message === 'auth') { store.set(TOKENKEY, ''); toast('GitHub did not accept the key. Set it up again.'); setTimeout(() => askToken(publish), 900); }
+    else toast('Publishing failed. Check your connection and try again.');
+  }
+  btn.disabled = false; btn.textContent = 'Publish to website';
+}
+document.getElementById('publishBtn').onclick = publish;
+document.getElementById('loadPubBtn').onclick = e => {
+  const t = e.currentTarget;
+  if (!published) return toast('Nothing has been published yet.');
+  if (!t.dataset.armed) { t.dataset.armed = '1'; t.textContent = 'Click again: replaces your local shelves'; return; }
+  delete t.dataset.armed; t.textContent = 'Load published version';
+  data = normalise({sample:false, owner:published.owner, shelves:published.shelves, books:published.books}); store.set(KEY, JSON.stringify(data)); render(); updatePubState();
+};
+
+/* ---------- start up ---------- */
 setRoom(store.get(ROOMKEY) || '');
+document.body.classList.toggle('visitor', !isOwner);
 render();
+(async () => {
+  try {
+    const r = await fetch('library.json?t=' + Date.now(), {cache:'no-store'});
+    if (!r.ok) throw 0;
+    published = await r.json();
+    if (!published.shelves || !published.books) throw 0;
+    publishedText = libText(published);
+    Object.assign(coverCache, published.covers || {}); Object.assign(colorCache, published.colors || {});
+    // visitors always see the published library; the owner keeps their working copy unless they have none
+    const hasLocal = (() => { try { const d = JSON.parse(store.get(KEY) || 'null'); return d && !d.sample; } catch(e) { return false; } })();
+    if (!isOwner || !hasLocal) { data = normalise({sample:false, owner:published.owner, shelves:published.shelves, books:published.books}); render(); }
+  } catch(e) { /* no published copy yet: show what we have */ }
+  updatePubState();
+})();
 })();
 </script>
 </body>
