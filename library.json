@@ -40,6 +40,12 @@
    "code": "NON"
   },
   {
+   "id": "z49xvwq",
+   "name": "Recommended to Me",
+   "code": "REC",
+   "kind": "recs"
+  },
+  {
    "id": "next",
    "name": "Want to Read",
    "code": "TBR",
@@ -333,7 +339,7 @@
    "finished": "",
    "cover": "https://covers.openlibrary.org/b/id/14816612-L.jpg",
    "notes": "",
-   "fav": false,
+   "fav": true,
    "reading": true
   },
   {
@@ -929,6 +935,22 @@
    "fav": false,
    "section": "pgp3ecz",
    "isbn": "0141500670"
+  },
+  {
+   "id": "1edw09x",
+   "title": "Sharp Objects",
+   "author": "Gillian Flynn",
+   "year": 2006,
+   "pages": 312,
+   "cover": "https://covers.openlibrary.org/b/id/167973-L.jpg",
+   "isbn": "9781597224581",
+   "shelf": "z49xvwq",
+   "rating": 0,
+   "finished": "",
+   "notes": "",
+   "fav": false,
+   "recBy": "ragnarock",
+   "recAt": "2026-10-07"
   }
  ],
  "inbox": "289b723d-6a85-4431-8fd8-9bc879ed06fb",
@@ -986,7 +1008,8 @@
   "https://covers.openlibrary.org/b/id/911254-L.jpg": "#ee8d48",
   "https://covers.openlibrary.org/b/id/2787359-L.jpg": "#100e11",
   "https://covers.openlibrary.org/b/id/8153054-L.jpg": "#0f0a06",
-  "https://covers.openlibrary.org/b/id/12459564-L.jpg": "#b5aa93"
+  "https://covers.openlibrary.org/b/id/12459564-L.jpg": "#b5aa93",
+  "https://covers.openlibrary.org/b/id/167973-L.jpg": "#0a0101"
  },
- "publishedAt": "2026-10-07T23:40:11.063Z"
+ "publishedAt": "2026-10-11T21:22:15.948Z"
 }
