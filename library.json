@@ -951,6 +951,20 @@
    "fav": false,
    "recBy": "ragnarock",
    "recAt": "2026-10-07"
+  },
+  {
+   "id": "si04lbr",
+   "title": "The IPO Trap",
+   "author": "Jayant Shilanjan Mundhra",
+   "year": "",
+   "pages": "",
+   "shelf": "next",
+   "rating": 0,
+   "finished": "",
+   "cover": "https://m.media-amazon.com/images/I/71nBoOz9i3L._AC_UF1000,1000_QL80_.jpg",
+   "notes": "",
+   "fav": true,
+   "section": "jvfl3t8"
   }
  ],
  "inbox": "289b723d-6a85-4431-8fd8-9bc879ed06fb",
@@ -1009,7 +1023,8 @@
   "https://covers.openlibrary.org/b/id/2787359-L.jpg": "#100e11",
   "https://covers.openlibrary.org/b/id/8153054-L.jpg": "#0f0a06",
   "https://covers.openlibrary.org/b/id/12459564-L.jpg": "#b5aa93",
-  "https://covers.openlibrary.org/b/id/167973-L.jpg": "#0a0101"
+  "https://covers.openlibrary.org/b/id/167973-L.jpg": "#0a0101",
+  "https://m.media-amazon.com/images/I/71nBoOz9i3L._AC_UF1000,1000_QL80_.jpg": "#d3d3d3"
  },
- "publishedAt": "2026-10-11T21:22:15.948Z"
+ "publishedAt": "2026-10-25T18:43:13.992Z"
 }
