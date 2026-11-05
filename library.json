@@ -965,6 +965,51 @@
    "notes": "",
    "fav": true,
    "section": "jvfl3t8"
+  },
+  {
+   "id": "rqnd0eh",
+   "title": "The Stationery Shop",
+   "author": "Marjan Kamali",
+   "year": 2019,
+   "pages": 320,
+   "shelf": "next",
+   "rating": 0,
+   "finished": "",
+   "cover": "https://covers.openlibrary.org/b/id/10211160-L.jpg",
+   "notes": "",
+   "fav": false,
+   "section": "jvfl3t8",
+   "isbn": "9782381223674"
+  },
+  {
+   "id": "e2u1nuc",
+   "title": "Three Men in a Boat (to say nothing of the dog)",
+   "author": "Jerome Klapka Jérôme",
+   "year": 1889,
+   "pages": 184,
+   "shelf": "fiction",
+   "rating": 0,
+   "finished": "",
+   "cover": "https://covers.openlibrary.org/b/id/8243006-L.jpg",
+   "notes": "",
+   "fav": false,
+   "section": "pgp3ecz",
+   "isbn": "9798454570248"
+  },
+  {
+   "id": "fgza8p4",
+   "title": "The Boy in the Striped Pyjamas",
+   "author": "John Boyne",
+   "year": 2006,
+   "pages": 216,
+   "shelf": "next",
+   "rating": 0,
+   "finished": "",
+   "cover": "https://covers.openlibrary.org/b/id/12720687-L.jpg",
+   "notes": "",
+   "fav": false,
+   "section": "jvfl3t8",
+   "isbn": "1439572763"
   }
  ],
  "inbox": "289b723d-6a85-4431-8fd8-9bc879ed06fb",
@@ -1024,7 +1069,10 @@
   "https://covers.openlibrary.org/b/id/8153054-L.jpg": "#0f0a06",
   "https://covers.openlibrary.org/b/id/12459564-L.jpg": "#b5aa93",
   "https://covers.openlibrary.org/b/id/167973-L.jpg": "#0a0101",
-  "https://m.media-amazon.com/images/I/71nBoOz9i3L._AC_UF1000,1000_QL80_.jpg": "#d3d3d3"
+  "https://m.media-amazon.com/images/I/71nBoOz9i3L._AC_UF1000,1000_QL80_.jpg": "#d3d3d3",
+  "https://covers.openlibrary.org/b/id/10211160-L.jpg": "#0d4b64",
+  "https://covers.openlibrary.org/b/id/8243006-L.jpg": "#293731",
+  "https://covers.openlibrary.org/b/id/12720687-L.jpg": "#6e8c95"
  },
- "publishedAt": "2026-10-25T18:43:17.835Z"
+ "publishedAt": "2026-11-05T23:10:18.147Z"
 }
